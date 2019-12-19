@@ -1,28 +1,66 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <canvas ref="canvas" />
   </div>
 </template>
 
-<script>
-import HelloWorld from './components/HelloWorld.vue'
+<script lang="ts">
+import { Component, Vue } from "vue-property-decorator";
+import { Graph } from "./components/graph/graph";
 
-export default {
-  name: 'app',
-  components: {
-    HelloWorld
+@Component
+export default class App extends Vue {
+  $refs!: {
+    canvas: HTMLCanvasElement;
+  };
+
+  graph?: Graph;
+
+  constructor() {
+    super();
+  }
+
+  mounted() {
+    const bodyEl = document.querySelector("body")!;
+    const bounds = bodyEl.getBoundingClientRect();
+
+    this.$refs.canvas.width = bounds.width;
+    this.$refs.canvas.height = bounds.height;
+
+    this.graph = new Graph(this.$refs.canvas.getContext("2d")!, bounds);
+
+    this.renderGraph(0);
+  }
+
+  public renderGraph(t: number) {
+    if (this.graph) {
+      this.graph.render(0);
+    }
+
+    requestAnimationFrame(() => {
+      this.renderGraph(0);
+    });
   }
 }
 </script>
 
 <style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+html,
+body {
+  height: 100%;
+  width: 100%;
+
+  padding: 0;
+  margin: 0;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
 }
 </style>
