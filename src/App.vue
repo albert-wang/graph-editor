@@ -5,6 +5,7 @@
       tabIndex="0"
       v-drag:middle="middleDrag"
       v-drag:left.click="leftDrag"
+      v-drag:right.click="rightDrag"
       @wheel="mouseWheel"
       @mousedown="mouseDown"
     />
@@ -18,6 +19,7 @@ import VueContext from "vue-context";
 import { Component, Vue } from "vue-property-decorator";
 import { Graph } from "./components/graph/graph";
 import { vec2, Vec2, negate } from "@/components/graph/util/math";
+import { DragEvent } from "./components/graph/directives/middle-drag";
 
 @Component
 export default class App extends Vue {
@@ -55,21 +57,29 @@ export default class App extends Vue {
     }
   }
 
-  public leftDrag(_: Vec2, position: Vec2, start: Vec2, isClick: boolean) {
+  // Drag and drop modifiers
+  public middleDrag(e: DragEvent) {
     if (!this.graph) {
       return;
     }
 
-    const grid = this.graph.state.grid;
-    if (start.y < 30) {
-      grid.setGuidePoint(grid.unproject(position));
-    } else {
-      if (isClick) {
-        this.graph.trySelectPoint(grid.unproject(position));
-      } else {
-        this.graph.modifyPoint(grid.unproject(position));
-      }
+    this.graph.mouseMiddleDrag(e);
+  }
+
+  public leftDrag(e: DragEvent) {
+    if (!this.graph) {
+      return;
     }
+
+    this.graph.mouseLeftDrag(e);
+  }
+
+  public rightDrag(e: DragEvent) {
+    if (!this.graph) {
+      return;
+    }
+
+    this.graph.mouseRightDrag(e);
   }
 
   public mouseWheel(e: WheelEvent) {
@@ -77,16 +87,7 @@ export default class App extends Vue {
       return;
     }
 
-    this.graph.state.grid.zoom(-e.deltaY);
-  }
-
-  // Drag and drop modifiers
-  public middleDrag(v: Vec2) {
-    if (!this.graph) {
-      return;
-    }
-
-    this.graph.state.grid.pixelMove(vec2(-v.x, v.y));
+    this.graph.mouseWheel(e);
   }
 
   public renderGraph(t: number) {

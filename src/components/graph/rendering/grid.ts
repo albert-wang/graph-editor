@@ -13,14 +13,14 @@ export default class GridRenderer {
     for (let x = xstart; x < state.bounds.x; x += xstep) {
       ctx.strokeStyle = Colors.BoldLine;
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, state.bounds.y);
+      ctx.moveTo(Math.round(x) + 0.5, 0);
+      ctx.lineTo(Math.round(x) + 0.5, state.bounds.y);
       ctx.stroke();
 
       ctx.strokeStyle = Colors.LightLine;
       ctx.beginPath();
-      ctx.moveTo(x + xstep / 2, 0);
-      ctx.lineTo(x + xstep / 2, state.bounds.y);
+      ctx.moveTo(Math.round(x + xstep / 2) + 0.5, 0);
+      ctx.lineTo(Math.round(x + xstep / 2) + 0.5, state.bounds.y);
       ctx.stroke();
     }
 
@@ -29,14 +29,17 @@ export default class GridRenderer {
     for (let y = ystart; y < state.bounds.y; y += ystep) {
       ctx.strokeStyle = Colors.BoldLine;
       ctx.beginPath();
-      ctx.moveTo(0, state.bounds.y - y);
-      ctx.lineTo(state.bounds.x, state.bounds.y - y);
+      ctx.moveTo(0, Math.round(state.bounds.y - y) + 0.5);
+      ctx.lineTo(state.bounds.x, Math.round(state.bounds.y - y) + 0.5);
       ctx.stroke();
 
       ctx.strokeStyle = Colors.LightLine;
       ctx.beginPath();
-      ctx.moveTo(0, state.bounds.y - (y + ystep / 2));
-      ctx.lineTo(state.bounds.x, state.bounds.y - (y + ystep / 2));
+      ctx.moveTo(0, Math.round(state.bounds.y - (y + ystep / 2)) + 0.5);
+      ctx.lineTo(
+        state.bounds.x,
+        Math.round(state.bounds.y - (y + ystep / 2)) + 0.5
+      );
       ctx.stroke();
     }
   }

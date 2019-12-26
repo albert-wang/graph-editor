@@ -35,8 +35,8 @@ class HorizontalRulerRenderer {
     const location = state.grid.project(state.grid.guidePoint);
     ctx.strokeStyle = Colors.GuideLine;
     ctx.beginPath();
-    ctx.moveTo(location.x, 30);
-    ctx.lineTo(location.x, state.bounds.y);
+    ctx.moveTo(Math.round(location.x) + 0.5, 30);
+    ctx.lineTo(Math.round(location.x) + 0.5, state.bounds.y);
     ctx.stroke();
 
     const txt = `${state.grid.guidePoint.x}`;
@@ -87,8 +87,8 @@ class VerticalRulerRenderer {
     const location = state.grid.project(state.grid.guidePoint);
     ctx.strokeStyle = Colors.GuideLine;
     ctx.beginPath();
-    ctx.moveTo(0, location.y);
-    ctx.lineTo(state.bounds.x, location.y);
+    ctx.moveTo(0, Math.round(location.y) + 0.5);
+    ctx.lineTo(state.bounds.x, Math.round(location.y) + 0.5);
     ctx.stroke();
   }
 }

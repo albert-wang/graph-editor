@@ -7,6 +7,7 @@ import Curves, {
   ControlPointType,
   SelectedPoint
 } from "./curves";
+import Menu from "./menu";
 
 interface InitialState {
   ctx: CanvasRenderingContext2D;
@@ -24,12 +25,17 @@ export default class State {
   public curves: Curves;
 
   // Point selection.
-  selectedPoint: SelectedPoint | undefined;
+  public selectedPoint: SelectedPoint | undefined;
+
+  // Menu operation
+  public menu: Menu;
 
   constructor(gs: InitialState) {
     this.ctx = gs.ctx;
     this.bounds = gs.bounds;
     this.grid = new GridState(this, gs.grid.area);
+    this.menu = new Menu();
+    this.menu.position = vec2(0, 0);
 
     this.curves = new Curves(this);
     const curve = new Curve("X");

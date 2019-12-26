@@ -1,4 +1,14 @@
-import { vec2 } from "../util/math";
+import { Vec2, vec2 } from "../util/math";
+
+export interface DragEvent {
+  // Pixel values
+  delta: Vec2;
+  mousePosition: Vec2;
+  startingPosition: Vec2;
+
+  isClick: boolean;
+  button: string;
+}
 
 export default {
   bind(el: HTMLElement, binding: any) {
@@ -17,20 +27,31 @@ export default {
     // @ts-ignore
     const targetButton = buttonMapping[binding.arg] || 0;
 
+    // Disable the default right click handler
+    el.addEventListener("contextmenu", (e: Event) => {
+      e.preventDefault();
+      return false;
+    });
+
     el.addEventListener("mousedown", (e: MouseEvent) => {
       if (e.button === targetButton) {
+        e.preventDefault();
+
         state.mouseDown = true;
         state.originalPosition = vec2(e.x, e.y);
         state.startingPosition = vec2(e.x, e.y);
 
         if (binding.modifiers["click"]) {
           if (typeof binding.value === "function" && state.mouseDown) {
-            binding.value(
-              vec2(0, 0),
-              vec2(e.x, e.y),
-              state.startingPosition,
-              true
-            );
+            const ev: DragEvent = {
+              delta: vec2(0, 0),
+              mousePosition: vec2(e.x, e.y),
+              startingPosition: state.startingPosition,
+              isClick: true,
+              button: binding.arg
+            };
+
+            binding.value(ev);
           }
         }
       }
@@ -55,7 +76,15 @@ export default {
       state.originalPosition = vec2(e.x, e.y);
 
       if (typeof binding.value === "function" && state.mouseDown) {
-        binding.value(delta, vec2(e.x, e.y), state.startingPosition, false);
+        const ev: DragEvent = {
+          delta: delta,
+          mousePosition: vec2(e.x, e.y),
+          startingPosition: state.startingPosition,
+          isClick: false,
+          button: binding.arg
+        };
+
+        binding.value(ev);
       }
     });
   }
