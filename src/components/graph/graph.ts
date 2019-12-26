@@ -1,69 +1,18 @@
-import HorizontalRuler from "./horizontal_ruler";
-import Grid from "./grid";
+import State from "./state";
 
-interface Vec2 {
-  x: number;
-  y: number;
-}
+import { HorizontalRuler, VerticalRuler } from "./rendering/rulers";
+import GridRenderer from "./rendering/grid";
+import CurveRenderer from "./rendering/curve";
 
-interface Rect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-function vec2(x: number, y: number): Vec2 {
-  return { x, y };
-}
-
-interface GridState {
-  area: Rect;
-}
-
-interface GraphState {
-  ctx: CanvasRenderingContext2D;
-  bounds: Vec2;
-
-  grid: GridState;
-}
-
-class State implements GraphState {
-  ctx: CanvasRenderingContext2D;
-  bounds: Vec2;
-
-  grid: GridState;
-
-  constructor(gs: GraphState) {
-    this.ctx = gs.ctx;
-    this.bounds = gs.bounds;
-    this.grid = gs.grid;
-  }
-
-  public get gridMinimum() {
-    return this.grid.area.x;
-  }
-
-  public get gridSteps() {
-    return Math.floor(this.bounds.x / 50);
-  }
-
-  public get gridInterval() {
-    let interval =
-      Math.floor(Math.floor(this.grid.area.w / this.gridSteps) / 10) * 10;
-    if (interval < 10) {
-      interval = 10;
-    }
-
-    return interval;
-  }
-}
+import { vec2, Vec2 } from "./util/math";
 
 class Graph {
   state: State;
 
   horizontalRuler: HorizontalRuler;
-  grid: Grid;
+  verticalRuler: VerticalRuler;
+  grid: GridRenderer;
+  curves: CurveRenderer;
 
   constructor(ctx: CanvasRenderingContext2D, bounds: ClientRect | DOMRect) {
     this.state = new State({
@@ -72,7 +21,7 @@ class Graph {
       grid: {
         area: {
           x: -10,
-          y: 10,
+          y: -10,
           w: 250,
           h: 20
         }
@@ -80,15 +29,30 @@ class Graph {
     });
 
     this.horizontalRuler = new HorizontalRuler();
-    this.grid = new Grid();
+    this.verticalRuler = new VerticalRuler();
+    this.grid = new GridRenderer();
+    this.curves = new CurveRenderer();
   }
 
-  render(dt: number) {
-    this.state.ctx.clearRect(0, 0, this.state.bounds.x, this.state.bounds.y);
+  public trySelectPoint(point: Vec2) {
+    this.state.selectedPoint = this.state.curves.trySelectPoint(point);
+  }
 
-    this.horizontalRuler.render(this.state);
+  public modifyPoint(pos: Vec2) {
+    if (this.state.selectedPoint && this.state.selectedPoint.curve) {
+      this.state.curves.modifyPoint(this.state.selectedPoint, pos);
+    }
+  }
+
+  public render(dt: number) {
+    this.state.ctx.clearRect(0, 0, this.state.bounds.x, this.state.bounds.y);
     this.grid.render(this.state);
+
+    this.verticalRuler.render(this.state);
+    this.horizontalRuler.render(this.state);
+
+    this.curves.render(this.state);
   }
 }
 
-export { State, GraphState, Graph };
+export { Graph };
