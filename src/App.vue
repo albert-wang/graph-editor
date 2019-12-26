@@ -8,6 +8,7 @@
       v-drag:right.click="rightDrag"
       @wheel="mouseWheel"
       @mousedown="mouseDown"
+      @mousemove="mouseMove"
     />
   </div>
 </template>
@@ -88,6 +89,14 @@ export default class App extends Vue {
     }
 
     this.graph.mouseWheel(e);
+  }
+
+  public mouseMove(e: MouseEvent) {
+    if (!this.graph) {
+      return;
+    }
+
+    this.graph.mouseMove(e);
   }
 
   public renderGraph(t: number) {

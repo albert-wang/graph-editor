@@ -81,18 +81,34 @@ export default class Curves {
           result.handle = SelectedPointType.Point;
         }
 
-        if (squaredDistance(query, point.forwardHandle) < SELECTION_DISTANCE) {
-          result.curve = curve;
-          result.point = point;
-          result.handle = SelectedPointType.Forward;
-        }
+        if (this.parent.selectedPoint && this.parent.selectedPoint.point) {
+          // Can only select handles if the point they belong to is already selected.
+          const sp = this.parent.selectedPoint.point;
+          if (point !== sp) {
+            continue;
+          }
 
-        if (
-          squaredDistance(query, point.backwardsHandle) < SELECTION_DISTANCE
-        ) {
-          result.curve = curve;
-          result.point = point;
-          result.handle = SelectedPointType.Backward;
+          // Select the forward handle iff this is a beizer curve
+          if (
+            point.type === ControlPointType.Beizer &&
+            squaredDistance(query, point.forwardHandle) < SELECTION_DISTANCE
+          ) {
+            result.curve = curve;
+            result.point = point;
+            result.handle = SelectedPointType.Forward;
+          }
+
+          // Select the backwards handle iff the previous path was a beizer
+          const previous = j > 0 ? curve.controlPoints[j - 1] : null;
+          if (
+            previous &&
+            previous.type === ControlPointType.Beizer &&
+            squaredDistance(query, point.backwardsHandle) < SELECTION_DISTANCE
+          ) {
+            result.curve = curve;
+            result.point = point;
+            result.handle = SelectedPointType.Backward;
+          }
         }
       }
     }

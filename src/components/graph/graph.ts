@@ -47,6 +47,10 @@ class Graph {
   // Input handling.
   public keyDown(e: KeyboardEvent) {}
 
+  public mouseMove(e: MouseEvent) {
+    this.mouse.move(e, this.state);
+  }
+
   public mouseWheel(e: WheelEvent) {
     this.mouse.wheel(e, this.state);
   }

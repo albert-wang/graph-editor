@@ -8,6 +8,12 @@ export default class MouseActions {
     state.grid.zoom(-e.deltaY);
   }
 
+  public move(e: MouseEvent, state: State) {
+    if (state.menu.visible) {
+      state.menu.setMousePosition(vec2(e.x, e.y));
+    }
+  }
+
   public middleDrag(e: DragEvent, state: State) {
     state.grid.pixelMove(vec2(-e.delta.x, e.delta.y));
   }
@@ -19,7 +25,11 @@ export default class MouseActions {
       grid.setGuidePoint(point);
     } else {
       if (e.isClick) {
-        state.selectedPoint = state.curves.trySelectPoint(point);
+        if (state.menu.visible) {
+          state.menu.click(e.mousePosition);
+        } else {
+          state.selectedPoint = state.curves.trySelectPoint(point);
+        }
       } else {
         if (state.selectedPoint && state.selectedPoint.curve) {
           state.curves.modifyPoint(state.selectedPoint, point);
@@ -30,7 +40,8 @@ export default class MouseActions {
 
   public rightDrag(e: DragEvent, state: State) {
     if (e.isClick) {
-      state.menu.position = state.grid.unproject(e.mousePosition);
+      state.menu.setPosition(e.mousePosition);
+      state.menu.show();
     }
   }
 }
