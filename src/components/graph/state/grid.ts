@@ -1,4 +1,4 @@
-import { vec2, Vec2, Rect } from "@/components/graph/util/math";
+import { vec2, Vec2, Rect } from "@/shared/math";
 import State from ".";
 
 export default class GridState {

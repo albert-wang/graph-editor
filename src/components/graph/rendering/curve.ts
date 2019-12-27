@@ -1,23 +1,40 @@
 import State from "../state";
-import { Curve, ControlPoint, ControlPointType } from "../state/curves";
+import { Curve, ControlPoint, ControlPointType } from "@/shared/curves";
 
-function assert(x: any) {
-  if (!x) {
-    console.error("Assertion failed");
-  }
-}
+import { assert } from "../util/assert";
 
 export default class CurveRenderer {
-  render(state: State) {
+  public static render(state: State) {
     const ctx = state.ctx;
     ctx.save();
+
+    const activeCurve = (c: Curve) => {
+      return state.selected.curve && state.selected.curve.name === c.name;
+    };
+
+    // Draw inactive curves first
+    state.curves.curves.forEach((curve, i) => {
+      if (!activeCurve(curve)) {
+        ctx.globalAlpha = 0.3;
+        ctx.setLineDash([4, 16]);
+        ctx.lineDashOffset = i * 4;
+
+        CurveRenderer.renderSingleCurve(state, ctx, curve);
+      }
+    });
+
     state.curves.curves.forEach(curve => {
-      this.renderSingleCurve(state, ctx, curve);
+      if (activeCurve(curve)) {
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+
+        CurveRenderer.renderSingleCurve(state, ctx, curve);
+      }
     });
     ctx.restore();
   }
 
-  drawHandles(
+  public static drawHandles(
     state: State,
     ctx: CanvasRenderingContext2D,
     prev: ControlPoint | null,
@@ -38,7 +55,7 @@ export default class CurveRenderer {
     ctx.fillStyle = "yellow";
 
     // If this is not the selected point, just draw the handle.
-    if (state.selectedPoint && state.selectedPoint.point === current) {
+    if (state.selected.point === current) {
       ctx.fillStyle = "orange";
 
       // Only draw the backwards handle if the backwards point
@@ -74,7 +91,11 @@ export default class CurveRenderer {
     ctx.restore();
   }
 
-  renderSingleCurve(state: State, ctx: CanvasRenderingContext2D, curve: Curve) {
+  public static renderSingleCurve(
+    state: State,
+    ctx: CanvasRenderingContext2D,
+    curve: Curve
+  ) {
     assert(curve.controlPoints.length >= 2);
 
     const first = curve.controlPoints[0];
@@ -84,7 +105,7 @@ export default class CurveRenderer {
     const fp = grid.project(first.position);
 
     ctx.lineWidth = 3;
-    ctx.strokeStyle = "#00ff00";
+    ctx.strokeStyle = curve.color;
 
     // Draw the connective lines between the left and right extremes
     ctx.beginPath();
@@ -94,7 +115,7 @@ export default class CurveRenderer {
 
     for (let i = 0; i < curve.controlPoints.length - 1; ++i) {
       ctx.lineWidth = 3;
-      ctx.strokeStyle = "#00ff00";
+      ctx.strokeStyle = curve.color;
 
       let previous = null;
       if (i > 0) {
@@ -136,7 +157,7 @@ export default class CurveRenderer {
     }
 
     ctx.lineWidth = 3;
-    ctx.strokeStyle = "#00ff00";
+    ctx.strokeStyle = curve.color;
 
     const lp = grid.project(last.position);
     ctx.beginPath();

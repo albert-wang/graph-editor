@@ -1,13 +1,10 @@
-import { Rect, Vec2, vec2 } from "@/components/graph/util/math";
+import { Rect, Vec2, vec2 } from "@/shared/math";
+import { Curve, ControlPoint, ControlPointType } from "@/shared/curves";
 
 import GridState from "./grid";
-import Curves, {
-  Curve,
-  ControlPoint,
-  ControlPointType,
-  SelectedPoint
-} from "./curves";
+import Curves, { SelectedPoint } from "./curves";
 import Menu from "./menu";
+import StateActions from "../actions/state";
 
 interface InitialState {
   ctx: CanvasRenderingContext2D;
@@ -25,21 +22,32 @@ export default class State {
   public curves: Curves;
 
   // Point selection.
-  public selectedPoint: SelectedPoint | undefined;
+  public selected: SelectedPoint;
 
   // Menu operation
   public menu: Menu;
 
+  // Undo/Redo literally only affects curves.
+  public undoStack: Curve[][];
+  public redoStack: Curve[][];
+
+  // Only add undo states every 500ms
+  public lastUndoPushTime: number;
+
   constructor(gs: InitialState) {
+    this.selected = new SelectedPoint();
+    this.selected.curve = null;
+    this.selected.point = null;
+
     this.ctx = gs.ctx;
     this.bounds = gs.bounds;
     this.grid = new GridState(this, gs.grid.area);
-    this.menu = new Menu();
+    this.menu = new Menu(this);
     this.menu.position = vec2(0, 0);
 
     this.curves = new Curves(this);
-    const curve = new Curve("X");
-    curve.controlPoints = [
+    const x = new Curve("X");
+    x.controlPoints = [
       new ControlPoint(
         ControlPointType.Beizer,
         vec2(1, 0),
@@ -59,6 +67,107 @@ export default class State {
         vec2(70, 10)
       )
     ];
-    this.curves.curves.push(curve);
+    this.curves.addCurve(x);
+
+    const y = new Curve("y");
+    y.controlPoints = [
+      new ControlPoint(
+        ControlPointType.Beizer,
+        vec2(1, 0),
+        vec2(11, 0),
+        vec2(-9, 0)
+      ),
+      new ControlPoint(
+        ControlPointType.Beizer,
+        vec2(60, 10),
+        vec2(70, 10),
+        vec2(50, 10)
+      ),
+      new ControlPoint(
+        ControlPointType.Linear,
+        vec2(80, 7),
+        vec2(90, 10),
+        vec2(70, 10)
+      )
+    ];
+    this.curves.addCurve(y);
+
+    const z = new Curve("Z");
+    z.controlPoints = [
+      new ControlPoint(
+        ControlPointType.Beizer,
+        vec2(1, 0),
+        vec2(11, 0),
+        vec2(-9, 0)
+      ),
+      new ControlPoint(
+        ControlPointType.Beizer,
+        vec2(60, 10),
+        vec2(70, 10),
+        vec2(50, 10)
+      ),
+      new ControlPoint(
+        ControlPointType.Linear,
+        vec2(80, 7),
+        vec2(90, 10),
+        vec2(70, 10)
+      )
+    ];
+    this.curves.addCurve(z);
+
+    this.undoStack = [];
+    this.redoStack = [];
+    this.lastUndoPushTime = 0;
+  }
+
+  // Menu dispatch functionality
+  public dispatch(e: string, mp: Vec2) {
+    StateActions.dispatch(e, mp, this);
+  }
+
+  // Undo/redo stack manipulation
+  public pushUndoState() {
+    const now = new Date().valueOf();
+    if (now - this.lastUndoPushTime < 250) {
+      return;
+    }
+
+    this.lastUndoPushTime = now;
+    this.undoStack.push(JSON.parse(JSON.stringify(this.curves.curves)));
+    while (this.undoStack.length > 64) {
+      this.undoStack.shift();
+    }
+
+    this.redoStack = [];
+  }
+
+  public undo() {
+    const stateCopy = JSON.parse(JSON.stringify(this.curves.curves));
+    const curvesState = this.undoStack.pop();
+    if (curvesState) {
+      this.curves.curves = curvesState.map(c => {
+        const transformed = new Curve(c.name);
+        Object.assign(transformed, c);
+        return transformed;
+      });
+
+      this.selected.point = null;
+      this.redoStack.push(stateCopy);
+    }
+  }
+
+  public redo() {
+    const stateCopy = JSON.parse(JSON.stringify(this.curves.curves));
+    const curvesState = this.redoStack.pop();
+    if (curvesState) {
+      this.curves.curves = curvesState.map(c => {
+        const transformed = new Curve(c.name);
+        Object.assign(transformed, c);
+        return transformed;
+      });
+
+      this.selected.point = null;
+      this.undoStack.push(stateCopy);
+    }
   }
 }

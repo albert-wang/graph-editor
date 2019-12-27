@@ -2,7 +2,7 @@ import State from "../state";
 import Colors from "./colors";
 
 export default class GridRenderer {
-  render(state: State) {
+  public static render(state: State) {
     const ctx = state.ctx;
 
     ctx.fillStyle = Colors.GridBackground;

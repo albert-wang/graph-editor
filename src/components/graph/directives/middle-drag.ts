@@ -1,4 +1,4 @@
-import { Vec2, vec2 } from "../util/math";
+import { Vec2, vec2 } from "../../../shared/math";
 
 export interface DragEvent {
   // Pixel values
@@ -7,7 +7,11 @@ export interface DragEvent {
   startingPosition: Vec2;
 
   isClick: boolean;
+  isMouseUp: boolean;
+  isStartDrag: boolean;
   button: string;
+
+  disableDrag: Function;
 }
 
 export default {
@@ -15,7 +19,8 @@ export default {
     const state = {
       mouseDown: false,
       originalPosition: vec2(0, 0),
-      startingPosition: vec2(0, 0)
+      startingPosition: vec2(0, 0),
+      isDragging: false
     };
 
     const buttonMapping = {
@@ -35,9 +40,8 @@ export default {
 
     el.addEventListener("mousedown", (e: MouseEvent) => {
       if (e.button === targetButton) {
-        e.preventDefault();
-
         state.mouseDown = true;
+        state.isDragging = false;
         state.originalPosition = vec2(e.x, e.y);
         state.startingPosition = vec2(e.x, e.y);
 
@@ -48,7 +52,12 @@ export default {
               mousePosition: vec2(e.x, e.y),
               startingPosition: state.startingPosition,
               isClick: true,
-              button: binding.arg
+              isMouseUp: false,
+              isStartDrag: false,
+              button: binding.arg,
+              disableDrag: () => {
+                state.mouseDown = false;
+              }
             };
 
             binding.value(ev);
@@ -60,6 +69,20 @@ export default {
     el.addEventListener("mouseup", (e: MouseEvent) => {
       if (e.button === targetButton) {
         state.mouseDown = false;
+        const ev: DragEvent = {
+          delta: vec2(0, 0),
+          mousePosition: vec2(e.x, e.y),
+          startingPosition: state.startingPosition,
+          isClick: false,
+          isMouseUp: true,
+          isStartDrag: false,
+          button: binding.arg,
+          disableDrag: () => {
+            state.mouseDown = false;
+          }
+        };
+
+        binding.value(ev);
       }
     });
 
@@ -81,8 +104,18 @@ export default {
           mousePosition: vec2(e.x, e.y),
           startingPosition: state.startingPosition,
           isClick: false,
-          button: binding.arg
+          isMouseUp: false,
+          isStartDrag: false,
+          button: binding.arg,
+          disableDrag: () => {
+            state.mouseDown = false;
+          }
         };
+
+        if (!state.isDragging) {
+          state.isDragging = true;
+          ev.isStartDrag = true;
+        }
 
         binding.value(ev);
       }

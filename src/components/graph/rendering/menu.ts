@@ -1,17 +1,17 @@
 import State from "../state";
-import { sub, vec2, Vec2, add } from "../util/math";
+import { sub, vec2, Vec2, add } from "../../../shared/math";
 
 import Menu, { MenuOptionType, MenuOption } from "../state/menu";
 
 export default class MenuRenderer {
-  private pointInBox(point: Vec2, upperLeft: Vec2, size: Vec2) {
+  private static pointInBox(point: Vec2, upperLeft: Vec2, size: Vec2) {
     const delta = sub(point, upperLeft);
     delta.y = -delta.y;
 
     return delta.x < size.x && delta.y < size.y && delta.x >= 0 && delta.y >= 0;
   }
 
-  public render(state: State) {
+  public static render(state: State) {
     const menu = state.menu;
     const ctx = state.ctx;
     const path = menu.optionPath;
@@ -38,7 +38,7 @@ export default class MenuRenderer {
     ctx.restore();
   }
 
-  private renderOptions(
+  private static renderOptions(
     ctx: CanvasRenderingContext2D,
     menu: Menu,
     mouse: Vec2,
@@ -51,12 +51,16 @@ export default class MenuRenderer {
     ctx.globalAlpha = 0.9;
     ctx.fillRect(position.x, position.y, size.x, size.y + 6);
 
-    ctx.fillStyle = "white";
-    ctx.strokeStyle = "white";
-    ctx.font = "12px arial";
-    ctx.lineWidth = 0.75;
-
     options.forEach(v => {
+      ctx.fillStyle = "white";
+      ctx.strokeStyle = "white";
+      ctx.font = "12px arial";
+      ctx.lineWidth = 2;
+
+      if (!v.enabled) {
+        ctx.fillStyle = "grey";
+      }
+
       switch (v.type) {
         case MenuOptionType.Default:
           if (path.indexOf(v) !== -1) {
@@ -71,15 +75,17 @@ export default class MenuRenderer {
             ctx.restore();
 
             if (v.children.length) {
-              this.renderOptions(
-                ctx,
-                menu,
-                mouse,
-                add(position, vec2(size.x, v.computedOffset - 10)),
-                menu.size(v.children),
-                v.children,
-                path
-              );
+              if (v.enabled) {
+                this.renderOptions(
+                  ctx,
+                  menu,
+                  mouse,
+                  add(position, vec2(size.x, v.computedOffset - 10)),
+                  menu.size(v.children),
+                  v.children,
+                  path
+                );
+              }
             }
           }
           ctx.fillText(
@@ -95,6 +101,13 @@ export default class MenuRenderer {
               position.x + size.x - metrics.width - 2,
               position.y + v.computedOffset + 2
             );
+          } else if (v.shortcut) {
+            const metrics = ctx.measureText(v.shortcut);
+            ctx.fillText(
+              v.shortcut,
+              position.x + size.x - metrics.width - 2,
+              position.y + v.computedOffset + 2
+            );
           }
 
           break;
@@ -106,11 +119,15 @@ export default class MenuRenderer {
           );
           break;
         case MenuOptionType.Spacer:
+          ctx.strokeStyle = "grey";
           ctx.beginPath();
-          ctx.moveTo(position.x, position.y + v.computedOffset - 9 + 0.5);
+          ctx.moveTo(
+            position.x,
+            Math.round(position.y + v.computedOffset) - 9 + 0.5
+          );
           ctx.lineTo(
             position.x + size.x,
-            position.y + v.computedOffset - 9 + 0.5
+            Math.round(position.y + v.computedOffset) - 9 + 0.5
           );
           ctx.stroke();
           break;

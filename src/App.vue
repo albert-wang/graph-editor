@@ -6,8 +6,8 @@
       v-drag:middle="middleDrag"
       v-drag:left.click="leftDrag"
       v-drag:right.click="rightDrag"
+      @keydown="keyDown"
       @wheel="mouseWheel"
-      @mousedown="mouseDown"
       @mousemove="mouseMove"
     />
   </div>
@@ -19,7 +19,7 @@ import VueContext from "vue-context";
 
 import { Component, Vue } from "vue-property-decorator";
 import { Graph } from "./components/graph/graph";
-import { vec2, Vec2, negate } from "@/components/graph/util/math";
+import { vec2, Vec2, negate } from "@/shared/math";
 import { DragEvent } from "./components/graph/directives/middle-drag";
 
 @Component
@@ -46,16 +46,12 @@ export default class App extends Vue {
     this.renderGraph(0);
   }
 
-  public mouseDown(e: MouseEvent) {
-    if (e.button == 2) {
-      // awet
-    }
-  }
-
   public keyDown(e: KeyboardEvent) {
     if (!this.graph) {
       return;
     }
+
+    this.graph.keyDown(e);
   }
 
   // Drag and drop modifiers

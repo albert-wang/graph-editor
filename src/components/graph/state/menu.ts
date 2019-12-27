@@ -1,4 +1,8 @@
-import { Vec2, vec2, sub, add } from "@/components/graph/util/math";
+import State from "../state";
+import { StateActionKeys } from "../actions/state";
+import { Vec2, vec2, sub, add } from "@/shared/math";
+import KeyboardActions from "../actions/keyboard";
+import Sizes from "../rendering/sizes";
 
 export enum MenuOptionType {
   Default = 0,
@@ -10,9 +14,11 @@ export interface MenuOption {
   type: MenuOptionType;
   label: string;
   action: string;
+  shortcut: string;
 
   children: MenuOption[];
   computedOffset: number;
+  enabled: boolean;
 }
 
 export interface OptionTree {
@@ -23,66 +29,82 @@ export default class Menu {
   // pixel coordinates
   position: Vec2;
   mousePosition: Vec2;
+  mousePositionOnOpen: Vec2;
 
   tree: OptionTree;
   visible: boolean;
 
   optionPath: MenuOption[];
 
-  private simpleOption(label: string, action: string): MenuOption {
+  private parent: State;
+
+  // Used to handle some behavior with moving to child menus
+  private disableBufferTriangles: boolean;
+
+  // Used to expand child menus after some time.
+  private enteredRootElementTimestamp: number;
+
+  private simpleOption(
+    label: string,
+    action: string,
+    enabled: boolean = true,
+    children: MenuOption[] = []
+  ): MenuOption {
+    const keys = KeyboardActions.shortcuts;
+    let shortcut = "";
+    Object.keys(keys).forEach(v => {
+      // @ts-ignore
+      if (keys[v] === action) {
+        shortcut = v;
+      }
+    });
+
     return {
       type: MenuOptionType.Default,
       label: label,
       action: action,
-      children: [],
-      computedOffset: 0
+      children: children,
+      computedOffset: 0,
+      enabled: enabled,
+      shortcut: shortcut
     };
   }
 
-  constructor() {
-    this.position = vec2(0, 0);
-    this.mousePosition = vec2(0, 0);
-    this.optionPath = [];
-
-    const spacer = {
+  private spacer() {
+    return {
       type: MenuOptionType.Spacer,
       label: "",
       action: "",
+      shortcut: "",
       children: [],
-      computedOffset: 0
+      computedOffset: 0,
+      enabled: true
     };
+  }
 
-    this.tree = {
-      options: [
-        {
-          type: MenuOptionType.Header,
-          label: "Curve Context Menu",
-          action: "",
-          children: [],
-          computedOffset: 0
-        },
-        spacer,
-        {
-          type: MenuOptionType.Default,
-          label: "Copy",
-          action: "copy-point",
-          children: [],
-          computedOffset: 0
-        },
-        {
-          type: MenuOptionType.Default,
-          label: "Snap",
-          action: "",
-          children: [
-            this.simpleOption("To selected frame", "snap-frame"),
-            this.simpleOption("Value to guide", "snap-value-guide")
-          ],
-          computedOffset: 0
-        }
-      ]
+  private header(name: string) {
+    return {
+      type: MenuOptionType.Header,
+      label: name,
+      action: "",
+      shortcut: "",
+      children: [],
+      computedOffset: 0,
+      enabled: true
     };
+  }
 
-    this.computeOffsetForOptions(this.tree.options);
+  constructor(parent: State) {
+    this.position = vec2(0, 0);
+    this.mousePosition = vec2(0, 0);
+    this.mousePositionOnOpen = vec2(0, 0);
+    this.optionPath = [];
+    this.parent = parent;
+    this.disableBufferTriangles = true;
+    this.enteredRootElementTimestamp = 0;
+    this.tree = { options: [] };
+
+    this.rebuildOptions();
     this.visible = false;
   }
 
@@ -92,7 +114,7 @@ export default class Menu {
       height += this.offsetOf(v);
     });
 
-    return vec2(150, height);
+    return vec2(Sizes.MenuWidth, height);
   }
 
   public setOptionTree(options: OptionTree) {
@@ -100,6 +122,7 @@ export default class Menu {
   }
 
   public show() {
+    this.rebuildOptions();
     this.visible = true;
   }
 
@@ -107,7 +130,7 @@ export default class Menu {
     this.visible = false;
   }
 
-  public click(v: Vec2) {
+  public click(v: Vec2): string {
     if (this.visible) {
       this.mousePosition = v;
       this.optionPath = this.optionPathUnderMouse();
@@ -124,12 +147,15 @@ export default class Menu {
           // Child selection.
           this.optionPath.length == 2
         ) {
-          console.log("DISPATCH MENU ACTION: ", selected.action);
           this.hide();
-          return;
+          if (selected.enabled) {
+            return selected.action;
+          }
         }
       }
     }
+
+    return "";
   }
 
   public setMousePosition(v: Vec2) {
@@ -156,7 +182,56 @@ export default class Menu {
   }
 
   public setPosition(v: Vec2) {
-    this.position = v;
+    this.position = vec2(v.x, v.y);
+    this.mousePositionOnOpen = vec2(v.x, v.y);
+    if (
+      this.position.x + Sizes.MenuWidth * 2 + Sizes.PropertiesWidth >
+      this.parent.bounds.x
+    ) {
+      this.position.x -= Sizes.MenuWidth;
+    }
+  }
+
+  private rebuildOptions() {
+    let hasSelectedPoint = false;
+    if (this.parent.selected && this.parent.selected.point) {
+      hasSelectedPoint = true;
+    }
+
+    let hasSelectedCurve = false;
+    if (this.parent.selected && this.parent.selected.curve) {
+      hasSelectedCurve = true;
+    }
+
+    const options = [
+      this.header("Curve Context Menu"),
+      this.spacer(),
+      this.simpleOption("Copy", StateActionKeys.Copy, hasSelectedPoint),
+      this.spacer(),
+      this.simpleOption("Move frame guide", StateActionKeys.SetGuideFrame),
+      this.simpleOption("Move value guide", StateActionKeys.SetGuideValue),
+      this.spacer(),
+      this.simpleOption("Handle Type", "", hasSelectedPoint, [
+        this.simpleOption("Linear", StateActionKeys.HandleToLinear),
+        this.simpleOption("Beizer", StateActionKeys.HandleToBeizer)
+      ]),
+      this.simpleOption("Insert keyframe", StateActionKeys.InsertKeyframe),
+      this.simpleOption(
+        "Insert keyframe in all curves",
+        StateActionKeys.InsertKeyframeAllCurves
+      ),
+      this.simpleOption("Snap", "", hasSelectedPoint, [
+        this.header("Snap ..."),
+        this.spacer(),
+        this.simpleOption("To selected frame", StateActionKeys.SnapFrame),
+        this.simpleOption("Value to guide", StateActionKeys.SnapValue)
+      ])
+    ];
+
+    this.computeOffsetForOptions(options);
+    this.setOptionTree({
+      options: options
+    });
   }
 
   private pointInBox(point: Vec2, upperLeft: Vec2, size: Vec2) {
@@ -222,18 +297,24 @@ export default class Menu {
         this.position.y + root.computedOffset - 10
       );
 
-      const inUpperBufferTriangle = this.pointInTriangle(this.mousePosition, [
+      let inUpperBufferTriangle = this.pointInTriangle(this.mousePosition, [
         upperLeft,
         add(upperLeft, vec2(size.x, 0)),
         add(upperLeft, vec2(size.x, -15))
       ]);
 
       const lowerLeft = add(upperLeft, vec2(0, this.offsetOf(root)));
-      const inLowerBufferTriangle = this.pointInTriangle(this.mousePosition, [
+      let inLowerBufferTriangle = this.pointInTriangle(this.mousePosition, [
         lowerLeft,
         add(lowerLeft, vec2(size.x, childSize.y)),
         add(lowerLeft, vec2(size.x, 0))
       ]);
+
+      // If we were ever in the child menu, disable the upper and lower buffer triangles
+      if (this.disableBufferTriangles) {
+        inLowerBufferTriangle = false;
+        inUpperBufferTriangle = false;
+      }
 
       const inChildBuffer = this.pointInBox(
         this.mousePosition,
@@ -262,6 +343,7 @@ export default class Menu {
             }
           });
 
+          this.disableBufferTriangles = true;
           return result;
         } else {
           return [root];
@@ -282,9 +364,26 @@ export default class Menu {
         )
       ) {
         result.push(v);
+
+        // Compute a minimum time to enable the buffer triangles
+        const now = new Date().valueOf();
+        if (
+          // If the buffer triangles are disabled
+          this.disableBufferTriangles &&
+          // And the selected root option has changed
+          v != this.optionPath[0]
+        ) {
+          // Start the timer
+          this.enteredRootElementTimestamp = now;
+        }
+
+        // Otherwise, if it has been 500 milliseconds, enable the buffer triangles
+        if (now - this.enteredRootElementTimestamp > 500) {
+          this.disableBufferTriangles = false;
+        }
       }
 
-      // assume only one levelc
+      // assume only one level
       const childSize = this.size(v.children);
       v.children.forEach(c => {
         if (
@@ -296,6 +395,7 @@ export default class Menu {
         ) {
           result.push(v);
           result.push(c);
+          this.disableBufferTriangles = true;
         }
       });
     });

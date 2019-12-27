@@ -2,7 +2,7 @@ import State from "../state";
 import Colors from "./colors";
 
 class HorizontalRulerRenderer {
-  render(state: State) {
+  public static render(state: State) {
     const ctx = state.ctx;
 
     // Render the background
@@ -55,7 +55,7 @@ class HorizontalRulerRenderer {
 }
 
 class VerticalRulerRenderer {
-  render(state: State) {
+  public static render(state: State) {
     const ctx = state.ctx;
 
     const step = state.grid.verticalPixelStep;
