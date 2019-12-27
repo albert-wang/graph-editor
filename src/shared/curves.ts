@@ -35,6 +35,7 @@ export interface CurveInformation {
 }
 
 export class Curve {
+  id: number;
   name: string;
   controlPoints: ControlPoint[];
 
@@ -44,6 +45,7 @@ export class Curve {
   locked: boolean;
 
   constructor(name: string) {
+    this.id = -1;
     this.name = name;
     this.controlPoints = [];
 

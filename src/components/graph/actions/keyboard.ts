@@ -7,9 +7,12 @@ export default class KeyboardActions {
     ["ctrl+z"]: StateActionKeys.Undo,
     ["ctrl+y"]: StateActionKeys.Redo,
     ["ctrl+ "]: StateActionKeys.SetGuideFrame,
+    ["shift+ "]: StateActionKeys.SetGuideValue,
+    ["s"]: StateActionKeys.SetGuideFrameToSelectedPointFrame,
+
     ["ctrl+i"]: StateActionKeys.InsertKeyframeAllCurves,
     ["i"]: StateActionKeys.InsertKeyframe,
-    ["shift+ "]: StateActionKeys.SetGuideValue,
+    ["Escape"]: StateActionKeys.SubmitEdit,
 
     ["/"]: StateActionKeys.DebugShowCurves
   };

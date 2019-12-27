@@ -1,13 +1,15 @@
-import { vec2, Vec2, add, sub } from "@/shared/math";
+import { vec2, Vec2, add, sub, mul, pointInBox } from "@/shared/math";
 import { Curve, ControlPoint, ControlPointType } from "@/shared/curves";
 
 import State from ".";
 // @ts-ignore
 import beizer from "bezier-js";
+
 import { assert } from "../util/assert";
 import colors from "../rendering/colors";
+import sizes from "../rendering/sizes";
 
-enum SelectedPointType {
+export enum SelectedPointType {
   Point = 0,
   Forward = 1,
   Backward = 2
@@ -77,6 +79,10 @@ export default class Curves {
     const candidatePoints: SelectionHistoryEntry[] = [];
     for (let i = 0; i < this.curves.length; ++i) {
       const curve = this.curves[i];
+      if (!curve.visible || curve.locked) {
+        continue;
+      }
+
       for (let j = 0; j < curve.controlPoints.length; ++j) {
         const point = curve.controlPoints[j];
 
@@ -286,6 +292,7 @@ export default class Curves {
   }
 
   public addCurve(c: Curve) {
+    c.id = this.curves.length;
     c.color = colors.LineColors[this.curves.length];
     this.curves.push(c);
 
@@ -294,7 +301,11 @@ export default class Curves {
     }
   }
 
-  public modifyPoint(point: SelectedPoint, position: Vec2) {
+  public modifyPoint(
+    point: SelectedPoint,
+    position: Vec2,
+    scale: Vec2 = vec2(1, 1)
+  ) {
     if (!point.curve || !point.point) {
       console.log("curve or point null, skipping");
       return;
@@ -304,26 +315,141 @@ export default class Curves {
     this.parent.selected.pointHistory = [];
 
     switch (point.handle) {
-      case SelectedPointType.Backward:
-        point.point.backwardsHandle = position;
+      case SelectedPointType.Backward: {
+        const delta = sub(position, point.point.backwardsHandle);
+        const modified = mul(delta, scale);
+        point.point.backwardsHandle = add(
+          point.point.backwardsHandle,
+          modified
+        );
         break;
-      case SelectedPointType.Forward:
-        point.point.forwardHandle = position;
-        break;
-      case SelectedPointType.Point: {
-        const old = vec2(point.point.position.x, point.point.position.y);
-        point.point.position = position;
-        point.point.position.x = Math.round(point.point.position.x);
+      }
+      case SelectedPointType.Forward: {
+        const delta = sub(position, point.point.forwardHandle);
+        const modified = mul(delta, scale);
 
-        const delta = sub(point.point.position, old);
-        point.point.forwardHandle = add(point.point.forwardHandle, delta);
-        point.point.backwardsHandle = add(point.point.backwardsHandle, delta);
-        point.point.position = position;
+        point.point.forwardHandle = add(point.point.forwardHandle, modified);
+        break;
+      }
+      case SelectedPointType.Point: {
+        position.x = Math.round(position.x);
+
+        const delta = sub(position, point.point.position);
+        const modified = mul(delta, scale);
+
+        point.point.position = add(point.point.position, modified);
+        point.point.forwardHandle = add(point.point.forwardHandle, modified);
+        point.point.backwardsHandle = add(
+          point.point.backwardsHandle,
+          modified
+        );
+
+        point.point.position.x = Math.round(point.point.position.x);
         break;
       }
     }
 
     this.sortCurve(point.curve);
+  }
+
+  public propertiesClick(query: Vec2): string {
+    const offsets = sizes.PropertyColumnOffsets;
+    const left = this.parent.bounds.x - sizes.PropertiesWidth;
+    const selectedProperty = function(
+      height: number,
+      offset: number,
+      nextOffset: number
+    ) {
+      return pointInBox(
+        query,
+        vec2(left + offset, height - 10),
+        vec2(nextOffset - offset - 12, 20)
+      );
+    };
+
+    if (selectedProperty(35, 0, offsets.value)) {
+      if (this.parent.selected.point) {
+        const point = this.parent.selected.point;
+        this.parent.inputField.x(left + offsets.color);
+        this.parent.inputField.y(25);
+
+        if (this.parent.selected.handle == SelectedPointType.Point) {
+          this.parent.inputField.value(point.position.x.toFixed(3));
+        } else if (this.parent.selected.handle == SelectedPointType.Forward) {
+          this.parent.inputField.value(point.forwardHandle.x.toFixed(3));
+        } else if (this.parent.selected.handle == SelectedPointType.Backward) {
+          this.parent.inputField.value(point.backwardsHandle.x.toFixed(3));
+        }
+        return "edit-point-frame";
+      }
+    }
+
+    if (selectedProperty(35, offsets.value, offsets.visible)) {
+      if (this.parent.selected.point) {
+        const point = this.parent.selected.point;
+        this.parent.inputField.x(left + offsets.value);
+        this.parent.inputField.y(25);
+        if (this.parent.selected.handle == SelectedPointType.Point) {
+          this.parent.inputField.value(point.position.y);
+        } else if (this.parent.selected.handle == SelectedPointType.Forward) {
+          this.parent.inputField.value(point.forwardHandle.y.toFixed(3));
+        } else if (this.parent.selected.handle == SelectedPointType.Backward) {
+          this.parent.inputField.value(point.backwardsHandle.y.toFixed(3));
+        }
+        return "edit-point-value";
+      }
+    }
+
+    for (let i = 0; i < this.curves.length; ++i) {
+      // From curve_properties renderer
+      const heightOffset = i * 19 + 90;
+
+      const selection = new SelectedPoint();
+      selection.curve = this.curves[i];
+
+      if (selectedProperty(heightOffset, 0, offsets.value)) {
+        this.parent.selected.selectPoint(selection);
+        this.parent.inputField.x(left + offsets.name);
+        this.parent.inputField.y(heightOffset - 10);
+        this.parent.inputField.value(selection.curve.name);
+        return "edit-name";
+      }
+
+      if (selectedProperty(heightOffset, offsets.value, offsets.visible)) {
+        const info = selection.curve.curveInformationAt(
+          this.parent.grid.guidePoint.x
+        );
+
+        if (
+          info.framesFromFirst == 0 ||
+          info.framesFromFirst == info.framesBetween
+        ) {
+          this.parent.selected.selectPoint(selection);
+          this.parent.inputField.x(left + offsets.value);
+          this.parent.inputField.y(heightOffset - 10);
+          this.parent.inputField.fontColor("yellow");
+          this.parent.inputField.value(
+            selection.curve.evaluate(this.parent.grid.guidePoint.x)
+          );
+
+          return "edit-value";
+        }
+      }
+
+      if (selectedProperty(heightOffset, offsets.visible, offsets.locked)) {
+        this.parent.selected.selectPoint(selection);
+        return "toggle-visible";
+      }
+
+      if (
+        selectedProperty(heightOffset, offsets.locked, sizes.PropertiesWidth)
+      ) {
+        this.parent.selected.selectPoint(selection);
+        return "toggle-locked";
+      }
+    }
+
+    return "";
   }
 
   private sortCurve(curve: Curve) {

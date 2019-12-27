@@ -9,22 +9,28 @@ export default class CurveRenderer {
     ctx.save();
 
     const activeCurve = (c: Curve) => {
-      return state.selected.curve && state.selected.curve.name === c.name;
+      return state.selected.curve && state.selected.curve === c;
     };
 
     // Draw inactive curves first
     state.curves.curves.forEach((curve, i) => {
-      if (!activeCurve(curve)) {
-        ctx.globalAlpha = 0.3;
-        ctx.setLineDash([4, 16]);
-        ctx.lineDashOffset = i * 4;
+      if (!activeCurve(curve) && curve.visible) {
+        if (curve.locked) {
+          ctx.globalAlpha = 0.6;
+          ctx.setLineDash([2, 8]);
+          ctx.lineDashOffset = i * 4;
+        } else {
+          ctx.globalAlpha = 0.3;
+          ctx.setLineDash([4, 16]);
+          ctx.lineDashOffset = i * 4;
+        }
 
         CurveRenderer.renderSingleCurve(state, ctx, curve);
       }
     });
 
     state.curves.curves.forEach(curve => {
-      if (activeCurve(curve)) {
+      if (activeCurve(curve) && curve.visible) {
         ctx.setLineDash([]);
         ctx.globalAlpha = 1;
 

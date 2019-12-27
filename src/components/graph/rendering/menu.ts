@@ -1,16 +1,9 @@
 import State from "../state";
-import { sub, vec2, Vec2, add } from "../../../shared/math";
+import { vec2, Vec2, add, pointInBox } from "../../../shared/math";
 
 import Menu, { MenuOptionType, MenuOption } from "../state/menu";
 
 export default class MenuRenderer {
-  private static pointInBox(point: Vec2, upperLeft: Vec2, size: Vec2) {
-    const delta = sub(point, upperLeft);
-    delta.y = -delta.y;
-
-    return delta.x < size.x && delta.y < size.y && delta.x >= 0 && delta.y >= 0;
-  }
-
   public static render(state: State) {
     const menu = state.menu;
     const ctx = state.ctx;

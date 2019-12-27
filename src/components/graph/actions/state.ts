@@ -1,8 +1,8 @@
 import State from "../state";
 import { SelectedPoint } from "../state/curves";
-import { ControlPointType } from "@/shared/curves";
+import { ControlPointType, ControlPoint } from "@/shared/curves";
 import { assert } from "../util/assert";
-import { Vec2 } from "@/shared/math";
+import { Vec2, vec2 } from "@/shared/math";
 
 export enum StateActionKeys {
   Undo = "undo",
@@ -16,13 +16,23 @@ export enum StateActionKeys {
   InsertKeyframe = "insert-keyframe",
   InsertKeyframeAllCurves = "insert-keyframe-all-curves",
   SetGuideFrame = "set-guide-frame",
+  SetGuideFrameToSelectedPointFrame = "set-guide-frame-to-selected-point-frame",
   SetGuideValue = "set-guide-value",
 
   HandleToLinear = "handle-to-linear",
   HandleToBeizer = "handle-to-beizer",
 
   SnapFrame = "snap-to-frame",
-  SnapValue = "snap-to-value"
+  SnapValue = "snap-to-value",
+
+  // Properties clicks
+  ToggleVisible = "toggle-visible",
+  ToggleLocked = "toggle-locked",
+  EditName = "edit-name",
+  EditValue = "edit-value",
+  EditPointValue = "edit-point-value",
+  EditPointFrame = "edit-point-frame",
+  SubmitEdit = "submit-edit"
 }
 
 export default class StateActions {
@@ -56,6 +66,12 @@ export default class StateActions {
 
       [StateActionKeys.Redo]() {
         state.redo();
+      },
+
+      [StateActionKeys.SetGuideFrameToSelectedPointFrame]() {
+        if (state.selected.point) {
+          state.grid.guidePoint.x = state.selected.point.position.x;
+        }
       },
 
       [StateActionKeys.SetGuideFrame]() {
@@ -126,6 +142,7 @@ export default class StateActions {
         assert(selectedPoint);
         assert(selectedPoint!.point);
 
+        // TODO: This doesn't sort the points
         selectedPoint!.point!.position.x = state.grid.guidePoint.x;
       },
 
@@ -141,6 +158,111 @@ export default class StateActions {
         point.position.y += deltaY;
         point.forwardHandle.y += deltaY;
         point.backwardsHandle.y += deltaY;
+      },
+
+      [StateActionKeys.ToggleVisible]() {
+        state.pushUndoState();
+        if (state.selected.curve) {
+          state.selected.curve.visible = !state.selected.curve.visible;
+        }
+      },
+
+      [StateActionKeys.ToggleLocked]() {
+        state.pushUndoState();
+        if (state.selected.curve) {
+          state.selected.curve.locked = !state.selected.curve.locked;
+        }
+      },
+
+      [StateActionKeys.SubmitEdit]() {
+        if (state.editingName && state.selected.curve) {
+          state.pushUndoState();
+          state.selected.curve.name = state.inputField.value();
+        }
+
+        if (state.editingValue && state.selected.curve) {
+          const info = state.selected.curve.curveInformationAt(
+            state.grid.guidePoint.x
+          );
+
+          try {
+            const value = parseFloat(state.inputField.value());
+            let point: ControlPoint | null = null;
+
+            if (info.framesFromFirst === 0 && info.points[0]) {
+              point = info.points[0];
+            } else if (
+              info.framesFromFirst === info.framesBetween &&
+              info.points[1]
+            ) {
+              point = info.points[1];
+            }
+
+            if (point) {
+              state.pushUndoState();
+
+              const deltaY = value - point.position.y;
+              point.position.y += deltaY;
+              point.forwardHandle.y += deltaY;
+              point.backwardsHandle.y += deltaY;
+            }
+          } catch (e) {
+            // Unparsable, fail to set.
+          }
+        }
+
+        if (state.editingPointFrame && state.selected.point) {
+          try {
+            const value = parseFloat(state.inputField.value());
+
+            state.pushUndoState();
+            state.curves.modifyPoint(
+              state.selected,
+              vec2(value, 0),
+              vec2(1, 0)
+            );
+          } catch (e) {
+            // Again, unparsable
+          }
+        }
+
+        if (state.editingPointValue && state.selected.point) {
+          try {
+            const value = parseFloat(state.inputField.value());
+
+            state.pushUndoState();
+            state.curves.modifyPoint(
+              state.selected,
+              vec2(0, value),
+              vec2(0, 1)
+            );
+          } catch (e) {
+            // Again, unparsable
+          }
+        }
+
+        state.editingName = false;
+        state.editingValue = false;
+        state.editingPointValue = false;
+        state.editingPointFrame = false;
+      },
+
+      [StateActionKeys.EditName]() {
+        state.editingName = true;
+        state.inputField.focus();
+      },
+
+      [StateActionKeys.EditValue]() {
+        state.editingValue = true;
+        state.inputField.focus();
+      },
+      [StateActionKeys.EditPointFrame]() {
+        state.editingPointFrame = true;
+        state.inputField.focus();
+      },
+      [StateActionKeys.EditPointValue]() {
+        state.editingPointValue = true;
+        state.inputField.focus();
       }
     };
 

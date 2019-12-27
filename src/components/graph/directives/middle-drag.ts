@@ -11,6 +11,9 @@ export interface DragEvent {
   isStartDrag: boolean;
   button: string;
 
+  ctrl: boolean;
+  shift: boolean;
+
   disableDrag: Function;
 }
 
@@ -55,6 +58,8 @@ export default {
               isMouseUp: false,
               isStartDrag: false,
               button: binding.arg,
+              ctrl: e.ctrlKey,
+              shift: e.shiftKey,
               disableDrag: () => {
                 state.mouseDown = false;
               }
@@ -77,6 +82,8 @@ export default {
           isMouseUp: true,
           isStartDrag: false,
           button: binding.arg,
+          ctrl: e.ctrlKey,
+          shift: e.shiftKey,
           disableDrag: () => {
             state.mouseDown = false;
           }
@@ -107,6 +114,8 @@ export default {
           isMouseUp: false,
           isStartDrag: false,
           button: binding.arg,
+          ctrl: e.ctrlKey,
+          shift: e.shiftKey,
           disableDrag: () => {
             state.mouseDown = false;
           }

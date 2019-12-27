@@ -1,8 +1,10 @@
 import State from "../state";
-import { Vec2, vec2 } from "../../../shared/math";
+import { Vec2, vec2, mul } from "../../../shared/math";
 
 import { DragEvent } from "../directives/middle-drag";
 import sizes from "../rendering/sizes";
+import { StateActionKeys } from "./state";
+import { SelectedPoint } from "../state/curves";
 
 export default class MouseActions {
   public static wheel(e: WheelEvent, state: State) {
@@ -16,6 +18,7 @@ export default class MouseActions {
   }
 
   public static middleDrag(e: DragEvent, state: State) {
+    state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
     state.grid.pixelMove(vec2(-e.delta.x, e.delta.y));
   }
 
@@ -29,12 +32,22 @@ export default class MouseActions {
       grid.setGuidePoint(point);
     } else {
       if (e.isClick) {
+        state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
+
         if (state.menu.visible) {
           const dispatch = state.menu.click(e.mousePosition);
           if (dispatch) {
             state.dispatch(dispatch, state.menu.mousePositionOnOpen);
           }
           e.disableDrag();
+        } else if (e.mousePosition.x > state.bounds.x - sizes.PropertiesWidth) {
+          e.disableDrag();
+
+          // This is a properties click, process it.
+          const dispatch = state.curves.propertiesClick(e.mousePosition);
+          if (dispatch) {
+            state.dispatch(dispatch, e.mousePosition);
+          }
         } else {
           const newSelection = state.curves.trySelectPoint(point);
           state.selected.selectPoint(newSelection);
@@ -46,7 +59,16 @@ export default class MouseActions {
 
         if (!e.isMouseUp) {
           if (state.selected && state.selected.point) {
-            state.curves.modifyPoint(state.selected, point);
+            let scale = vec2(1, 1);
+            if (e.ctrl) {
+              scale = mul(scale, vec2(1, 0));
+            }
+
+            if (e.shift) {
+              scale = mul(scale, vec2(0, 1));
+            }
+
+            state.curves.modifyPoint(state.selected, point, scale);
           }
         }
       }
@@ -55,6 +77,8 @@ export default class MouseActions {
 
   public static rightDrag(e: DragEvent, state: State) {
     if (e.isClick) {
+      state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
+
       const point = state.grid.unproject(e.mousePosition);
       const newSelection = state.curves.trySelectPoint(point);
       state.selected.selectPoint(newSelection);

@@ -3,6 +3,8 @@ import Colors from "./colors";
 import Sizes from "./sizes";
 import { Curve } from "@/shared/curves";
 import { Vec2, vec2 } from "@/shared/math";
+import sizes from "./sizes";
+import { SelectedPointType } from "../state/curves";
 
 export default class CurvePropertiesRenderer {
   private static vert(ctx: CanvasRenderingContext2D, x: number, h: number) {
@@ -36,20 +38,62 @@ export default class CurvePropertiesRenderer {
     ctx.stroke();
 
     // Render the table.
-    ctx.fillStyle = Colors.BrightText;
     ctx.strokeStyle = Colors.BoldLine;
     ctx.font = "9pt arial";
+    ctx.fillStyle = Colors.BrightText;
 
-    ctx.fillText("Curve", left + 10, 10);
-    ctx.fillText("Value", left + 200, 10);
+    let pointValues = [0, 0];
+    const point = state.selected.point;
+    if (point && state.selected.handle != SelectedPointType.Point) {
+      if (state.selected.handle == SelectedPointType.Forward) {
+        pointValues = [point.forwardHandle.x, point.forwardHandle.y];
+
+        ctx.fillText("Forward Handle X", left + 10, 10);
+        ctx.fillText("Y", left + 200, 10);
+      } else if (state.selected.handle == SelectedPointType.Backward) {
+        pointValues = [point.backwardsHandle.x, point.backwardsHandle.y];
+
+        ctx.fillText("Backward Handle X", left + 10, 10);
+        ctx.fillText("Y", left + 200, 10);
+      }
+    } else {
+      if (point) {
+        pointValues = [point.position.x, point.position.y];
+      }
+
+      ctx.fillText("Point Frame", left + 10, 10);
+      ctx.fillText("Value", left + 200, 10);
+    }
+
+    CurvePropertiesRenderer.horz(ctx, 19, left, state.bounds.x);
+
+    if (state.selected.point) {
+      ctx.fillStyle = Colors.GuideLine;
+      ctx.fillText(
+        `${pointValues[0].toFixed(3)}`,
+        left + sizes.PropertyColumnOffsets.color,
+        35
+      );
+
+      ctx.fillStyle = "yellow";
+      ctx.fillText(
+        `${pointValues[1].toFixed(3)}`,
+        left + sizes.PropertyColumnOffsets.value,
+        35
+      );
+    }
+
+    ctx.fillStyle = Colors.BrightText;
+    ctx.fillText("Curve", left + 10, 65);
+    ctx.fillText("Value", left + 200, 65);
     CurvePropertiesRenderer.vert(ctx, left + 190, state.bounds.y);
 
-    ctx.fillText("V", left + 300, 10);
+    ctx.fillText("V", left + 300, 65);
     CurvePropertiesRenderer.vert(ctx, left + 290, state.bounds.y);
 
-    ctx.fillText("L", left + 330, 10);
+    ctx.fillText("L", left + 330, 65);
     CurvePropertiesRenderer.vert(ctx, left + 320, state.bounds.y);
-    CurvePropertiesRenderer.horz(ctx, 19, left, state.bounds.x);
+    CurvePropertiesRenderer.horz(ctx, 35 + 39, left, state.bounds.x);
 
     const frame = state.grid.guidePoint.x;
 
@@ -57,6 +101,14 @@ export default class CurvePropertiesRenderer {
       CurvePropertiesRenderer.renderSingleProperty(ctx, frame, left, c, i);
     });
 
+    if (
+      state.editingName ||
+      state.editingValue ||
+      state.editingPointFrame ||
+      state.editingPointValue
+    ) {
+      state.inputField.render();
+    }
     ctx.restore();
   }
 
@@ -103,25 +155,18 @@ export default class CurvePropertiesRenderer {
     c: Curve,
     i: number
   ) {
-    const columnOffsets = {
-      color: 10,
-      name: 25,
-      value: 200,
-      visible: 300,
-      locked: 330
-    };
-    const heightOffset = i * 19 + 35;
+    const heightOffset = i * 19 + 90;
 
     this.rect(
       ctx,
-      vec2(left + columnOffsets.color, heightOffset - 6),
+      vec2(left + sizes.PropertyColumnOffsets.color, heightOffset - 6),
       vec2(10, 10),
       c.color
     );
 
     ctx.fillText(
       c.name || "Unnamed Curve",
-      left + columnOffsets.name,
+      left + sizes.PropertyColumnOffsets.name,
       heightOffset
     );
 
@@ -136,18 +181,22 @@ export default class CurvePropertiesRenderer {
       ctx.fillStyle = "#00FF00";
     }
 
-    ctx.fillText(`${value}`, left + columnOffsets.value, heightOffset);
+    ctx.fillText(
+      `${value}`,
+      left + sizes.PropertyColumnOffsets.value,
+      heightOffset
+    );
     ctx.fillStyle = Colors.BrightText;
 
     this.checkbox(
       ctx,
-      vec2(left + columnOffsets.visible, heightOffset - 3),
+      vec2(left + sizes.PropertyColumnOffsets.visible, heightOffset - 3),
       c.visible
     );
 
     this.checkbox(
       ctx,
-      vec2(left + columnOffsets.locked, heightOffset - 3),
+      vec2(left + sizes.PropertyColumnOffsets.locked, heightOffset - 3),
       c.locked
     );
   }

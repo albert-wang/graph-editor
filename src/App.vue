@@ -37,11 +37,12 @@ export default class App extends Vue {
   mounted() {
     const bodyEl = document.querySelector("body")!;
     const bounds = bodyEl.getBoundingClientRect();
+    const canvas = this.$refs.canvas;
 
-    this.$refs.canvas.width = bounds.width;
-    this.$refs.canvas.height = bounds.height;
+    canvas.width = bounds.width;
+    canvas.height = bounds.height;
 
-    this.graph = new Graph(this.$refs.canvas.getContext("2d")!, bounds);
+    this.graph = new Graph(canvas.getContext("2d")!, canvas, bounds);
 
     this.renderGraph(0);
   }

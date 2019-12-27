@@ -1,6 +1,13 @@
 import State from "../state";
 import { StateActionKeys } from "../actions/state";
-import { Vec2, vec2, sub, add } from "@/shared/math";
+import {
+  Vec2,
+  vec2,
+  sub,
+  add,
+  pointInBox,
+  pointInTriangle
+} from "@/shared/math";
 import KeyboardActions from "../actions/keyboard";
 import Sizes from "../rendering/sizes";
 
@@ -170,7 +177,7 @@ export default class Menu {
 
     if (this.optionPath.length === 0) {
       if (
-        !this.pointInBox(
+        !pointInBox(
           this.mousePosition,
           add(this.position, vec2(-40, -40)),
           add(this.size(this.tree.options), vec2(80, 150))
@@ -208,8 +215,13 @@ export default class Menu {
       this.spacer(),
       this.simpleOption("Copy", StateActionKeys.Copy, hasSelectedPoint),
       this.spacer(),
-      this.simpleOption("Move frame guide", StateActionKeys.SetGuideFrame),
-      this.simpleOption("Move value guide", StateActionKeys.SetGuideValue),
+      this.simpleOption(
+        "Frame Guide to Selected",
+        StateActionKeys.SetGuideFrameToSelectedPointFrame,
+        hasSelectedPoint
+      ),
+      this.simpleOption("Move Frame Guide", StateActionKeys.SetGuideFrame),
+      this.simpleOption("Move Value Guide", StateActionKeys.SetGuideValue),
       this.spacer(),
       this.simpleOption("Handle Type", "", hasSelectedPoint, [
         this.simpleOption("Linear", StateActionKeys.HandleToLinear),
@@ -234,41 +246,6 @@ export default class Menu {
     });
   }
 
-  private pointInBox(point: Vec2, upperLeft: Vec2, size: Vec2) {
-    const delta = sub(point, upperLeft);
-
-    return delta.x < size.x && delta.y < size.y && delta.x >= 0 && delta.y >= 0;
-  }
-
-  // See realtime collision detection
-  private baycentric(point: Vec2, triangle: Vec2[]): number[] {
-    const dot = (a: Vec2, b: Vec2) => {
-      return a.x * b.x + a.y * b.y;
-    };
-
-    const v0 = sub(triangle[1], triangle[0]);
-    const v1 = sub(triangle[2], triangle[0]);
-    const v2 = sub(point, triangle[0]);
-
-    const d00 = dot(v0, v0);
-    const d01 = dot(v0, v1);
-    const d11 = dot(v1, v1);
-    const d20 = dot(v2, v0);
-    const d21 = dot(v2, v1);
-
-    const denom = d00 * d11 - d01 * d01;
-
-    const v = (d11 * d20 - d01 * d21) / denom;
-    const w = (d00 * d21 - d01 * d20) / denom;
-    const u = 1.0 - v - w;
-    return [u, v, w];
-  }
-
-  private pointInTriangle(point: Vec2, triangle: Vec2[]) {
-    const b = this.baycentric(point, triangle);
-    return b[0] >= 0 && b[1] >= 0 && b[2] >= 0;
-  }
-
   private optionPathUnderMouse(): MenuOption[] {
     const size = this.size(this.tree.options);
     const result: MenuOption[] = [];
@@ -280,13 +257,13 @@ export default class Menu {
       const root = this.optionPath[0];
       const childSize = this.size(root.children);
 
-      const inRootOption = this.pointInBox(
+      const inRootOption = pointInBox(
         this.mousePosition,
         vec2(this.position.x, this.position.y + root.computedOffset),
         vec2(size.x, this.offsetOf(root))
       );
 
-      const inChildMenu = this.pointInBox(
+      const inChildMenu = pointInBox(
         this.mousePosition,
         add(this.position, vec2(size.x, root.computedOffset - 10)),
         childSize
@@ -297,14 +274,14 @@ export default class Menu {
         this.position.y + root.computedOffset - 10
       );
 
-      let inUpperBufferTriangle = this.pointInTriangle(this.mousePosition, [
+      let inUpperBufferTriangle = pointInTriangle(this.mousePosition, [
         upperLeft,
         add(upperLeft, vec2(size.x, 0)),
         add(upperLeft, vec2(size.x, -15))
       ]);
 
       const lowerLeft = add(upperLeft, vec2(0, this.offsetOf(root)));
-      let inLowerBufferTriangle = this.pointInTriangle(this.mousePosition, [
+      let inLowerBufferTriangle = pointInTriangle(this.mousePosition, [
         lowerLeft,
         add(lowerLeft, vec2(size.x, childSize.y)),
         add(lowerLeft, vec2(size.x, 0))
@@ -316,7 +293,7 @@ export default class Menu {
         inUpperBufferTriangle = false;
       }
 
-      const inChildBuffer = this.pointInBox(
+      const inChildBuffer = pointInBox(
         this.mousePosition,
         add(this.position, vec2(size.x - 15, root.computedOffset - 35)),
         add(childSize, vec2(30, 50))
@@ -332,7 +309,7 @@ export default class Menu {
         if (inChildMenu) {
           root.children.forEach(c => {
             if (
-              this.pointInBox(
+              pointInBox(
                 this.mousePosition,
                 add(upperLeft, vec2(size.x, c.computedOffset - 10)),
                 vec2(childSize.x, this.offsetOf(c))
@@ -357,7 +334,7 @@ export default class Menu {
         this.position.y + v.computedOffset - 10
       );
       if (
-        this.pointInBox(
+        pointInBox(
           this.mousePosition,
           upperLeft,
           vec2(size.x, this.offsetOf(v))
@@ -387,7 +364,7 @@ export default class Menu {
       const childSize = this.size(v.children);
       v.children.forEach(c => {
         if (
-          this.pointInBox(
+          pointInBox(
             this.mousePosition,
             add(upperLeft, vec2(size.x, c.computedOffset - 10)),
             vec2(childSize.x, this.offsetOf(c))

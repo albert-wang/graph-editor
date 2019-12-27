@@ -16,9 +16,14 @@ class Graph {
   private state: State;
   private lastKnownMousePosition: Vec2;
 
-  constructor(ctx: CanvasRenderingContext2D, bounds: ClientRect | DOMRect) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    canvas: HTMLCanvasElement,
+    bounds: ClientRect | DOMRect
+  ) {
     this.state = new State({
       ctx: ctx,
+      canvas: canvas,
       bounds: vec2(bounds.width, bounds.height),
       grid: {
         area: {
