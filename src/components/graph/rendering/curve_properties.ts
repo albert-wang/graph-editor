@@ -1,8 +1,8 @@
 import State from "../state";
 import Colors from "./colors";
 import Sizes from "./sizes";
-import { Curve } from "@/shared/curves";
-import { Vec2, vec2 } from "@/shared/math";
+import { Curve } from "@graph/shared/curves";
+import { Vec2, vec2 } from "@graph/shared/math";
 import sizes from "./sizes";
 import { SelectedPointType } from "../state/curves";
 

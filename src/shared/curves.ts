@@ -1,4 +1,4 @@
-import { vec2, Vec2, add, sub } from "@/shared/math";
+import { Vec2 } from "./math";
 
 // @ts-ignore
 import beizer from "bezier-js";
@@ -191,21 +191,23 @@ export class Curve {
         const y = lerp(f.position.y, n.position.y, info.t);
         return y;
       } else {
-        // This is horrifically slow - recomputing the lut and then
-        // doing a /linear/ search for the bounding points is very
-        // suboptimal.
-        const b = new beizer(
-          f.position.x,
-          f.position.y,
-          f.forwardHandle.x,
-          f.forwardHandle.y,
-          n.backwardsHandle.x,
-          n.backwardsHandle.y,
-          n.position.x,
-          n.position.y
-        );
+        let lut = f.cachedLUT;
+        if (lut.length === 0) {
+          const b = new beizer(
+            f.position.x,
+            f.position.y,
+            f.forwardHandle.x,
+            f.forwardHandle.y,
+            n.backwardsHandle.x,
+            n.backwardsHandle.y,
+            n.position.x,
+            n.position.y
+          );
 
-        const lut = b.getLUT(128);
+          lut = b.getLUT(128);
+          f.cachedLUT = lut;
+        }
+
         const bounds = this.lutLookup(frame, lut);
         if (!bounds[0] && bounds[1]) {
           return bounds[1].y;
@@ -270,5 +272,11 @@ export class Curve {
     }
 
     return [less, greater];
+  }
+
+  public invalidateLUTs() {
+    this.controlPoints.forEach(c => {
+      c.cachedLUT = [];
+    });
   }
 }

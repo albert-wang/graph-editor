@@ -11,7 +11,7 @@ import { DragEvent } from "./directives/middle-drag";
 import MenuRenderer from "./rendering/menu";
 import KeyboardActions from "./actions/keyboard";
 import CurvePropertiesRenderer from "./rendering/curve_properties";
-import { Curve } from "@/shared/curves";
+import { Curve } from "@graph/shared/curves";
 
 class Graph {
   private state: State;

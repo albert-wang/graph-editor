@@ -1,10 +1,10 @@
-import { Rect, Vec2, vec2 } from "@/shared/math";
-import { Curve, ControlPoint, ControlPointType } from "@/shared/curves";
+import { Rect, Vec2, vec2 } from "@graph/shared/math";
+import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
 
 import GridState from "./grid";
 import Curves, { SelectedPoint } from "./curves";
 import Menu from "./menu";
-import StateActions, { StateActionKeys } from "../actions/state";
+import StateActions, { StateActionKeys } from "../actions";
 
 // @ts-ignore
 import CanvasInput from "../3rdparty/canvasinput";
@@ -86,6 +86,7 @@ export default class State {
       }
     });
 
+    // A set of debug curves
     this.curves = new Curves(this);
     const x = new Curve("X");
     x.controlPoints = [
@@ -110,7 +111,7 @@ export default class State {
     ];
     this.curves.addCurve(x);
 
-    const y = new Curve("y");
+    const y = new Curve("Y");
     y.controlPoints = [
       new ControlPoint(
         ControlPointType.Beizer,
@@ -168,6 +169,15 @@ export default class State {
   // Menu dispatch functionality
   public dispatch(e: string, mp: Vec2) {
     StateActions.dispatch(e, mp, this);
+  }
+
+  public isEditing() {
+    return (
+      this.editingName ||
+      this.editingPointFrame ||
+      this.editingPointValue ||
+      this.editingValue
+    );
   }
 
   // Playback functionality.

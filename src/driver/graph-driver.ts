@@ -1,5 +1,6 @@
-import { Curve, ControlPoint, ControlPointType } from "@/shared/curves";
+import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
 import { vec2 } from "../shared/math";
+import Curves from "@/components/graph/state/curves";
 
 export class Player {
   public static LoopForever: number = -1;
@@ -282,9 +283,13 @@ export default class GraphDriver {
     return result;
   }
 
-  public static loadAnimation(animation: string): Animation {
+  public static loadAnimation(animation: string, curves: any[]): Animation {
     const result = new Animation(animation);
-
+    result.setCurves(
+      curves.map(c => {
+        return Curve.fromJSON(c);
+      })
+    );
     return result;
   }
 }

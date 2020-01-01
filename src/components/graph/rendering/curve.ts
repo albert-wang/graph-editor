@@ -1,5 +1,5 @@
 import State from "../state";
-import { Curve, ControlPoint, ControlPointType } from "@/shared/curves";
+import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
 
 import { assert } from "../util/assert";
 import beizer from "bezier-js";

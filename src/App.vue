@@ -19,7 +19,7 @@ import VueContext from "vue-context";
 
 import { Component, Vue } from "vue-property-decorator";
 import { Graph } from "./components/graph/graph";
-import { vec2, Vec2, negate } from "@/shared/math";
+import { vec2, Vec2, negate } from "@graph/shared/math";
 import { DragEvent } from "./components/graph/directives/middle-drag";
 
 @Component

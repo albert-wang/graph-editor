@@ -1,3 +1,5 @@
+const path = require("path");
+
 const config = {
   publicPath: "./",
   pages: {
@@ -13,6 +15,9 @@ const config = {
       .options({
         fix: true
       });
+
+    config.resolve.alias
+      .set("@graph", path.resolve(__dirname, "src"))
   },
 
   devServer: {

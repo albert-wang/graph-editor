@@ -1,5 +1,5 @@
-import { vec2, Vec2, add, sub, mul, pointInBox } from "@/shared/math";
-import { Curve, ControlPoint, ControlPointType } from "@/shared/curves";
+import { vec2, Vec2, add, sub, mul, pointInBox } from "@graph/shared/math";
+import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
 
 import State from ".";
 // @ts-ignore
@@ -313,6 +313,7 @@ export default class Curves {
 
     // Clear out the selection history on drag.
     this.parent.selected.pointHistory = [];
+    point.curve.invalidateLUTs();
 
     switch (point.handle) {
       case SelectedPointType.Backward: {

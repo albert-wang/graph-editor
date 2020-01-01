@@ -1053,7 +1053,8 @@ CanvasInput.prototype = {
    */
   selectText: function(range) {
     var self = this,
-      range = range || [0, self._value.length];
+      // @ts-ignore
+      range = range || [0, self._value.length]; // eslint-disable-line
 
     // select the range of text specified (or all if none specified)
     setTimeout(function() {

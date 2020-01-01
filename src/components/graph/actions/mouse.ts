@@ -3,12 +3,11 @@ import { Vec2, vec2, mul } from "../../../shared/math";
 
 import { DragEvent } from "../directives/middle-drag";
 import sizes from "../rendering/sizes";
-import { StateActionKeys } from "./state";
-import { SelectedPoint } from "../state/curves";
+import { StateActionKeys } from ".";
 
 export default class MouseActions {
   public static wheel(e: WheelEvent, state: State) {
-    state.grid.zoom(-e.deltaY);
+    state.dispatch(StateActionKeys.Zoom, vec2(e.deltaX, e.deltaY));
   }
 
   public static move(e: MouseEvent, state: State) {
@@ -18,59 +17,80 @@ export default class MouseActions {
   }
 
   public static middleDrag(e: DragEvent, state: State) {
-    state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
-    state.grid.pixelMove(vec2(-e.delta.x, e.delta.y));
+    if (state.isEditing()) {
+      state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
+    }
+
+    state.dispatch(StateActionKeys.MoveScreen, vec2(e.delta.x, e.delta.y));
   }
 
   public static leftDrag(e: DragEvent, state: State) {
     const grid = state.grid;
     const point = grid.unproject(e.mousePosition);
+
+    // If this is a drag that started from the top of the screen,
+    // then manipulate the guide bars.
     if (
       e.startingPosition.y < sizes.HorizontalRulerHeight &&
       e.startingPosition.x < state.bounds.x - sizes.PropertiesWidth
     ) {
-      grid.setGuidePoint(point);
-    } else {
-      if (e.isClick) {
+      state.dispatch(StateActionKeys.SetGuideFrame, e.mousePosition);
+      state.dispatch(StateActionKeys.SetGuideValue, e.mousePosition);
+      return;
+    }
+
+    // If this is a click
+    if (e.isClick) {
+      // If this is currently editing a text field, try to submit it
+      if (state.isEditing()) {
         state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
+      }
 
-        if (state.menu.visible) {
-          const dispatch = state.menu.click(e.mousePosition);
-          if (dispatch) {
-            state.dispatch(dispatch, state.menu.mousePositionOnOpen);
-          }
-          e.disableDrag();
-        } else if (e.mousePosition.x > state.bounds.x - sizes.PropertiesWidth) {
-          e.disableDrag();
+      // If the menu is visible, try to click in the menu
+      if (state.menu.visible) {
+        e.disableDrag();
 
-          // This is a properties click, process it.
-          const dispatch = state.curves.propertiesClick(e.mousePosition);
-          if (dispatch) {
-            state.dispatch(dispatch, e.mousePosition);
-          }
-        } else {
-          const newSelection = state.curves.trySelectPoint(point);
-          state.selected.selectPoint(newSelection);
+        const dispatch = state.menu.click(e.mousePosition);
+        if (dispatch) {
+          state.dispatch(dispatch, state.menu.mousePositionOnOpen);
         }
-      } else {
-        if (e.isStartDrag && state.selected.point) {
-          state.pushUndoState();
+        return;
+      }
+
+      // If this click is in the properties area, try to click in the properties area.
+      if (e.mousePosition.x > state.bounds.x - sizes.PropertiesWidth) {
+        e.disableDrag();
+
+        // This is a properties click, process it.
+        const dispatch = state.curves.propertiesClick(e.mousePosition);
+        if (dispatch) {
+          state.dispatch(dispatch, e.mousePosition);
+        }
+        return;
+      }
+
+      // Otherwise, try to click a point.
+      state.dispatch(StateActionKeys.SelectPoint, e.mousePosition);
+      return;
+    }
+
+    // Otherwise, this is a straight up drag - modify the selected point iff one exists.
+    if (e.isStartDrag && state.selected.point) {
+      state.pushUndoState();
+    }
+
+    if (!e.isMouseUp) {
+      if (state.selected && state.selected.point) {
+        let scale = vec2(1, 1);
+        if (e.ctrl) {
+          scale = mul(scale, vec2(1, 0));
         }
 
-        if (!e.isMouseUp) {
-          if (state.selected && state.selected.point) {
-            let scale = vec2(1, 1);
-            if (e.ctrl) {
-              scale = mul(scale, vec2(1, 0));
-            }
-
-            if (e.shift) {
-              scale = mul(scale, vec2(0, 1));
-            }
-
-            state.curves.modifyPoint(state.selected, point, scale);
-          }
+        if (e.shift) {
+          scale = mul(scale, vec2(0, 1));
         }
+
+        state.curves.modifyPoint(state.selected, point, scale);
       }
     }
   }
@@ -82,13 +102,8 @@ export default class MouseActions {
       }
 
       state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
-
-      const point = state.grid.unproject(e.mousePosition);
-      const newSelection = state.curves.trySelectPoint(point);
-      state.selected.selectPoint(newSelection);
-
-      state.menu.setPosition(e.mousePosition);
-      state.menu.show();
+      state.dispatch(StateActionKeys.SelectPoint, e.mousePosition);
+      state.dispatch(StateActionKeys.OpenMenu, e.mousePosition);
     }
   }
 }

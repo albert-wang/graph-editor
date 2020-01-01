@@ -1,5 +1,5 @@
 import State from "../state";
-import { StateActionKeys } from "../actions/state";
+import { StateActionKeys } from "../actions";
 import {
   Vec2,
   vec2,
@@ -7,7 +7,7 @@ import {
   add,
   pointInBox,
   pointInTriangle
-} from "@/shared/math";
+} from "@graph/shared/math";
 import KeyboardActions from "../actions/keyboard";
 import Sizes from "../rendering/sizes";
 

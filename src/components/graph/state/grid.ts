@@ -1,4 +1,4 @@
-import { vec2, Vec2, Rect } from "@/shared/math";
+import { vec2, Vec2, Rect } from "@graph/shared/math";
 import State from ".";
 
 export default class GridState {
@@ -35,14 +35,6 @@ export default class GridState {
 
     this.scale.x = Math.min(Math.max(this.scale.x, 0.25), 10000);
     this.scale.y = Math.min(Math.max(this.scale.y, 0.25), 10000);
-
-    /*
-    const deltaScale = vec2(
-      this.scale.x - oldScale.x,
-      this.scale.y - oldScale.y
-    );
-    this.position.x += deltaScale.x;
-    */
   }
 
   public setGuidePoint(p: Vec2) {
