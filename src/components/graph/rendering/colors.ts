@@ -7,6 +7,11 @@ export default {
   BoldLine: "#111111",
   LightLine: "#303030",
   GuideLine: "#00a6ff",
+  MenuBackground: "#222222",
+  HighlightedItem: "#4363d8",
+  HeaderColor: "#696969",
+  SpacerColor: "#494949",
+  DisabledText: "#494949",
 
   LineColors: [
     "#FF0000",

@@ -1,4 +1,5 @@
 import State from "../state";
+import Colors from "./colors";
 import { vec2, Vec2, add, pointInBox } from "../../../shared/math";
 
 import Menu, { MenuOptionType, MenuOption } from "../state/menu";
@@ -40,30 +41,35 @@ export default class MenuRenderer {
     options: MenuOption[],
     path: MenuOption[]
   ) {
-    ctx.fillStyle = "black";
+    ctx.fillStyle = Colors.MenuBackground;
     ctx.globalAlpha = 0.9;
+
     ctx.fillRect(position.x, position.y, size.x, size.y + 6);
 
+    ctx.strokeStyle = "black";
+    ctx.globalAlpha = 1;
+    ctx.strokeRect(position.x - 1, position.y - 1, size.x + 2, size.y + 6 + 2);
+
     options.forEach(v => {
-      ctx.fillStyle = "white";
+      ctx.fillStyle = Colors.BrightText;
       ctx.strokeStyle = "white";
       ctx.font = "12px arial";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1;
 
       if (!v.enabled) {
-        ctx.fillStyle = "grey";
+        ctx.fillStyle = Colors.DisabledText;
       }
 
       switch (v.type) {
         case MenuOptionType.Default:
           if (path.indexOf(v) !== -1) {
             ctx.save();
-            ctx.fillStyle = "blue";
+            ctx.fillStyle = Colors.HighlightedItem;
             ctx.fillRect(
               position.x,
               position.y + v.computedOffset - 10,
               size.x,
-              18
+              21
             );
             ctx.restore();
 
@@ -73,7 +79,7 @@ export default class MenuRenderer {
                   ctx,
                   menu,
                   mouse,
-                  add(position, vec2(size.x, v.computedOffset - 10)),
+                  add(position, vec2(size.x, v.computedOffset - 30)),
                   menu.size(v.children),
                   v.children,
                   path
@@ -88,9 +94,9 @@ export default class MenuRenderer {
           );
 
           if (v.children.length) {
-            const metrics = ctx.measureText(">");
+            const metrics = ctx.measureText("⯈");
             ctx.fillText(
-              ">",
+              "⯈",
               position.x + size.x - metrics.width - 2,
               position.y + v.computedOffset + 2
             );
@@ -104,15 +110,18 @@ export default class MenuRenderer {
           }
 
           break;
-        case MenuOptionType.Header:
+        case MenuOptionType.Header: {
+          ctx.fillStyle = Colors.HeaderColor;
+          const metrics = ctx.measureText(v.label);
           ctx.fillText(
             v.label,
-            position.x + 10,
+            position.x + size.x - metrics.width - 2,
             position.y + v.computedOffset + 2
           );
           break;
+        }
         case MenuOptionType.Spacer:
-          ctx.strokeStyle = "grey";
+          ctx.strokeStyle = Colors.SpacerColor;
           ctx.beginPath();
           ctx.moveTo(
             position.x,

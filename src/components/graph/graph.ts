@@ -11,10 +11,14 @@ import { DragEvent } from "./directives/middle-drag";
 import MenuRenderer from "./rendering/menu";
 import KeyboardActions from "./actions/keyboard";
 import CurvePropertiesRenderer from "./rendering/curve_properties";
+import { Curve } from "@/shared/curves";
 
 class Graph {
   private state: State;
   private lastKnownMousePosition: Vec2;
+
+  private animationName: string;
+  private broadcastChannel: BroadcastChannel;
 
   constructor(
     ctx: CanvasRenderingContext2D,
@@ -36,6 +40,16 @@ class Graph {
     });
 
     this.lastKnownMousePosition = vec2(0, 0);
+
+    // @ts-ignore
+    const params = new URL(window.location).searchParams;
+
+    // Load the animation name
+    this.animationName = params.get("animation");
+    this.broadcastChannel = new BroadcastChannel(this.animationName);
+
+    // Load the curves.
+    this.loadAnimation();
   }
 
   // Input handling.
@@ -64,6 +78,40 @@ class Graph {
     MouseActions.rightDrag(e, this.state);
   }
 
+  public resize(bounds: ClientRect | DOMRect) {
+    this.state.bounds = vec2(bounds.width, bounds.height);
+  }
+
+  public close() {
+    window.localStorage.removeItem(`status-${this.animationName}`);
+  }
+
+  public loadAnimation() {
+    const value = window.localStorage.getItem(`status-${this.animationName}`);
+    if (!value) {
+      return;
+    }
+
+    let res = {
+      editing: false,
+      curves: [] as any[]
+    };
+
+    try {
+      res = JSON.parse(value);
+    } catch (e) {
+      console.error(e);
+    }
+
+    this.state.curves.curves = [];
+    res.curves.map((c, i) => {
+      const curve = new Curve(c.name || "unnamed");
+      Object.assign(curve, c);
+
+      this.state.curves.addCurve(curve);
+    });
+  }
+
   public render(dt: number) {
     this.state.ctx.clearRect(0, 0, this.state.bounds.x, this.state.bounds.y);
     GridRenderer.render(this.state);
@@ -72,6 +120,16 @@ class Graph {
     CurveRenderer.render(this.state);
     CurvePropertiesRenderer.render(this.state);
     MenuRenderer.render(this.state);
+
+    this.broadcastChannel.postMessage(
+      JSON.stringify({
+        event: "state",
+        data: {
+          frame: this.state.grid.guidePoint.x,
+          curves: this.state.curves.curves
+        }
+      })
+    );
   }
 }
 

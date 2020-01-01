@@ -2,6 +2,7 @@ import State from "../state";
 import { Curve, ControlPoint, ControlPointType } from "@/shared/curves";
 
 import { assert } from "../util/assert";
+import beizer from "bezier-js";
 
 export default class CurveRenderer {
   public static render(state: State) {
@@ -154,7 +155,7 @@ export default class CurveRenderer {
           ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, np.x, np.y);
           ctx.stroke();
 
-          this.drawHandles(state, ctx, previous, current, next);
+          const b = this.drawHandles(state, ctx, previous, current, next);
           break;
         }
         default:

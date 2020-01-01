@@ -1,5 +1,5 @@
 import State from "../state";
-import { SelectedPoint } from "../state/curves";
+import { SelectedPoint, SelectedPointType } from "../state/curves";
 import { ControlPointType, ControlPoint } from "@/shared/curves";
 import { assert } from "../util/assert";
 import { Vec2, vec2 } from "@/shared/math";
@@ -76,12 +76,12 @@ export default class StateActions {
 
       [StateActionKeys.SetGuideFrame]() {
         const p = state.grid.unproject(mousePosition);
-        state.grid.guidePoint.x = Math.round(p.x);
+        state.grid.setGuidePoint(vec2(p.x, state.grid.guidePoint.y));
       },
 
       [StateActionKeys.SetGuideValue]() {
         const p = state.grid.unproject(mousePosition);
-        state.grid.guidePoint.y = Math.round(p.y * 100) / 100;
+        state.grid.setGuidePoint(vec2(state.grid.guidePoint.x, p.y));
       },
 
       [StateActionKeys.InsertKeyframeAllCurves]() {
@@ -153,11 +153,11 @@ export default class StateActions {
         assert(selectedPoint!.point);
 
         const point = selectedPoint!.point!;
-        const deltaY = state.grid.guidePoint.y - point.position.y;
-
-        point.position.y += deltaY;
-        point.forwardHandle.y += deltaY;
-        point.backwardsHandle.y += deltaY;
+        state.curves.modifyPoint(
+          state.selected,
+          state.grid.guidePoint,
+          vec2(0, 1)
+        );
       },
 
       [StateActionKeys.ToggleVisible]() {
@@ -200,11 +200,12 @@ export default class StateActions {
 
             if (point) {
               state.pushUndoState();
+              const sp = new SelectedPoint();
+              sp.curve = state.selected.curve;
+              sp.point = point;
+              sp.handle = SelectedPointType.Point;
 
-              const deltaY = value - point.position.y;
-              point.position.y += deltaY;
-              point.forwardHandle.y += deltaY;
-              point.backwardsHandle.y += deltaY;
+              state.curves.modifyPoint(sp, vec2(0, value), vec2(0, 1));
             }
           } catch (e) {
             // Unparsable, fail to set.

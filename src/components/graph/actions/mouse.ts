@@ -77,6 +77,10 @@ export default class MouseActions {
 
   public static rightDrag(e: DragEvent, state: State) {
     if (e.isClick) {
+      if (state.menu.visible) {
+        return;
+      }
+
       state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
 
       const point = state.grid.unproject(e.mousePosition);

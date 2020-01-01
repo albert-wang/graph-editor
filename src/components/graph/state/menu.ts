@@ -183,6 +183,7 @@ export default class Menu {
           add(this.size(this.tree.options), vec2(80, 150))
         )
       ) {
+        console.log("hiding due to no options under path");
         this.hide();
       }
     }
@@ -213,7 +214,7 @@ export default class Menu {
     const options = [
       this.header("Curve Context Menu"),
       this.spacer(),
-      this.simpleOption("Copy", StateActionKeys.Copy, hasSelectedPoint),
+      this.simpleOption("Copy animation code", StateActionKeys.Copy),
       this.spacer(),
       this.simpleOption(
         "Frame Guide to Selected",
@@ -223,9 +224,21 @@ export default class Menu {
       this.simpleOption("Move Frame Guide", StateActionKeys.SetGuideFrame),
       this.simpleOption("Move Value Guide", StateActionKeys.SetGuideValue),
       this.spacer(),
-      this.simpleOption("Handle Type", "", hasSelectedPoint, [
+      this.simpleOption("Interpolation", "", hasSelectedPoint, [
+        this.header("Interpolation"),
+        this.spacer(),
         this.simpleOption("Linear", StateActionKeys.HandleToLinear),
-        this.simpleOption("Beizer", StateActionKeys.HandleToBeizer)
+        this.simpleOption("Beizer", StateActionKeys.HandleToBeizer),
+        this.spacer(),
+        this.simpleOption("Smoothstep (1)", StateActionKeys.HandleToBeizer),
+        this.simpleOption("Smoothstep (2)", StateActionKeys.HandleToBeizer)
+      ]),
+      this.simpleOption("Handles", "", hasSelectedPoint, [
+        this.header("Handles"),
+        this.spacer(),
+        this.simpleOption("Mirror handles (value)", ""),
+        this.simpleOption("Mirror handles (frame)", ""),
+        this.simpleOption("Step", StateActionKeys.HandleToLinear)
       ]),
       this.simpleOption("Insert keyframe", StateActionKeys.InsertKeyframe),
       this.simpleOption(
@@ -270,7 +283,7 @@ export default class Menu {
       );
 
       const upperLeft = vec2(
-        this.position.x,
+        this.position.x + 30,
         this.position.y + root.computedOffset - 10
       );
 
@@ -295,8 +308,8 @@ export default class Menu {
 
       const inChildBuffer = pointInBox(
         this.mousePosition,
-        add(this.position, vec2(size.x - 15, root.computedOffset - 35)),
-        add(childSize, vec2(30, 50))
+        add(this.position, vec2(size.x - 15, root.computedOffset - 65)),
+        add(childSize, vec2(50, 65))
       );
 
       if (
@@ -311,7 +324,7 @@ export default class Menu {
             if (
               pointInBox(
                 this.mousePosition,
-                add(upperLeft, vec2(size.x, c.computedOffset - 10)),
+                add(upperLeft, vec2(size.x, c.computedOffset - 30)),
                 vec2(childSize.x, this.offsetOf(c))
               )
             ) {
@@ -320,9 +333,14 @@ export default class Menu {
             }
           });
 
+          if (result.length == 0) {
+            result.push(root);
+          }
+
           this.disableBufferTriangles = true;
           return result;
         } else {
+          console.log([root]);
           return [root];
         }
       }

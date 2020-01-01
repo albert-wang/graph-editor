@@ -54,6 +54,14 @@ export class Curve {
     this.locked = false;
   }
 
+  public toJSONString() {
+    return JSON.stringify({
+      id: this.id,
+      name: this.name,
+      controlPoints: this.controlPoints
+    });
+  }
+
   public minimumFrame(): number {
     return this.controlPoints[0].position.x;
   }
@@ -140,10 +148,17 @@ export class Curve {
       const f = info.points[0];
       const n = info.points[1];
 
+      const lerp = (a: number, b: number, t: number) => {
+        return (b - a) * t + a;
+      };
+
       if (f.type === ControlPointType.Linear) {
-        const y = (n.position.y - f.position.y) * info.t + f.position.y;
+        const y = lerp(f.position.y, n.position.y, info.t);
         return y;
       } else {
+        // This is horrifically slow - recomputing the lut and then
+        // doing a /linear/ search for the bounding points is very
+        // suboptimal.
         const b = new beizer(
           f.position.x,
           f.position.y,
@@ -155,9 +170,47 @@ export class Curve {
           n.position.y
         );
 
-        return b.get(info.t).y;
+        const lut = b.getLUT(128);
+        const bounds = this.lutLookup(frame, lut);
+        if (!bounds[0] && bounds[1]) {
+          return bounds[1].y;
+        } else if (!bounds[1] && bounds[0]) {
+          return bounds[0].y;
+        } else if (bounds[0] && bounds[1]) {
+          return lerp(
+            bounds[0].y,
+            bounds[1].y,
+            (frame - bounds[0].x) / (bounds[1].x - bounds[0].x)
+          );
+        } else {
+          return 0;
+        }
       }
     }
+  }
+
+  // TODO: Merge implementations with controlPointsAtFrame
+  private lutLookup(frame: number, lut: BezierJs.Point[]) {
+    if (frame < lut[0].x) {
+      return [null, lut[0]];
+    }
+
+    const last = lut[lut.length - 1];
+    if (frame > last.x) {
+      return [last, null];
+    }
+
+    let less = lut[0];
+    let greater = lut[1];
+
+    for (let i = 0; i < lut.length - 1; ++i) {
+      if (lut[i].x <= frame) {
+        less = lut[i];
+        greater = lut[i + 1];
+      }
+    }
+
+    return [less, greater];
   }
 
   public controlPointsAtFrame(frame: number) {
@@ -172,16 +225,14 @@ export class Curve {
     }
 
     let less = this.controlPoints[0];
-    for (let i = 1; i < this.controlPoints.length; ++i) {
+    let greater = this.controlPoints[1];
+
+    for (let i = 1; i < this.controlPoints.length - 1; ++i) {
       if (this.controlPoints[i].position.x <= frame) {
         less = this.controlPoints[i];
+        greater = this.controlPoints[i + 1];
       }
     }
-
-    let greater =
-      this.controlPoints.find(c => {
-        return c.position.x > frame;
-      }) || last;
 
     return [less, greater];
   }

@@ -17,7 +17,7 @@ export default class GridState {
   constructor(parent: State, position: Vec2) {
     this.parent = parent;
     this.position = position;
-    this.scale = vec2(5, 50);
+    this.scale = vec2(15, 50);
     this.guidePoint = vec2(1, 0);
   }
 

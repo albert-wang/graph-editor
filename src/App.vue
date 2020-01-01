@@ -39,6 +39,9 @@ export default class App extends Vue {
     const bounds = bodyEl.getBoundingClientRect();
     const canvas = this.$refs.canvas;
 
+    window.addEventListener("resize", this.resize);
+    window.addEventListener("beforeunload", this.close);
+
     canvas.width = bounds.width;
     canvas.height = bounds.height;
 
@@ -94,6 +97,27 @@ export default class App extends Vue {
     }
 
     this.graph.mouseMove(e);
+  }
+
+  public close() {
+    if (!this.graph) {
+      return;
+    }
+
+    this.graph.close();
+  }
+
+  public resize() {
+    const bodyEl = document.querySelector("body")!;
+    const bounds = bodyEl.getBoundingClientRect();
+    const canvas = this.$refs.canvas;
+
+    canvas.width = bounds.width;
+    canvas.height = bounds.height;
+
+    if (this.graph) {
+      this.graph.resize(bounds);
+    }
   }
 
   public renderGraph(t: number) {

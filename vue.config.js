@@ -2,6 +2,7 @@ const config = {
   publicPath: "./",
   pages: {
     main: "./src/main.ts",
+    demo: "./src/demo/main.ts",
   },
 
   chainWebpack: config => {
