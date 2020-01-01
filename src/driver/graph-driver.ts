@@ -188,9 +188,7 @@ export class Animation {
           case "state": {
             this.overrideFrame = e.data.frame;
             this.overrideCurves = e.data.curves.map((c: any) => {
-              const curve = new Curve(c.name);
-              Object.assign(curve, c);
-              return curve;
+              return Curve.fromJSON(c);
             });
             break;
           }

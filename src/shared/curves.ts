@@ -14,6 +14,8 @@ export class ControlPoint {
   public forwardHandle: Vec2;
   public backwardsHandle: Vec2;
 
+  cachedLUT: BezierJs.Point[];
+
   constructor(
     type: ControlPointType,
     position: Vec2,
@@ -24,6 +26,16 @@ export class ControlPoint {
     this.position = position;
     this.forwardHandle = forward;
     this.backwardsHandle = backward;
+    this.cachedLUT = [];
+  }
+
+  toJSON() {
+    return {
+      type: this.type,
+      position: this.position,
+      forwardHandle: this.forwardHandle,
+      backwardsHandle: this.backwardsHandle
+    };
   }
 }
 
@@ -54,12 +66,35 @@ export class Curve {
     this.locked = false;
   }
 
-  public toJSONString() {
-    return JSON.stringify({
+  public static fromJSON(jsonObject: any): Curve {
+    const result = new Curve(jsonObject.name || "Unnamed Curve");
+    Object.assign(result, jsonObject);
+
+    const cps = jsonObject.controlPoints || [];
+    if (cps.length) {
+      result.controlPoints = cps.map((cp: any) => {
+        const c = new ControlPoint(
+          cp.type,
+          cp.position,
+          cp.forwardHandle,
+          cp.backwardsHandle
+        );
+        return c;
+      });
+    }
+
+    return result;
+  }
+
+  public toJSON() {
+    return {
       id: this.id,
       name: this.name,
-      controlPoints: this.controlPoints
-    });
+      controlPoints: this.controlPoints,
+      color: this.color,
+      visible: this.visible,
+      locked: this.locked
+    };
   }
 
   public minimumFrame(): number {

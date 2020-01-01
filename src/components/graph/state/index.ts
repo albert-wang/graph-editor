@@ -192,8 +192,7 @@ export default class State {
         vec2(this.grid.guidePoint.x + 1, this.grid.guidePoint.y)
       );
 
-      // 15 frames after the end to show hanging behavior
-      if (this.grid.guidePoint.x > this.curves.maximumFrame() + 15) {
+      if (this.grid.guidePoint.x > this.curves.maximumFrame()) {
         this.grid.guidePoint.x = this.curves.minimumFrame();
       }
     }
@@ -220,8 +219,8 @@ export default class State {
     const curvesState = this.undoStack.pop();
     if (curvesState) {
       this.curves.curves = curvesState.map(c => {
-        const transformed = new Curve(c.name);
-        Object.assign(transformed, c);
+        const transformed = Curve.fromJSON(c);
+
         if (this.selected.curve && c.id == this.selected.curve.id) {
           this.selected.curve = transformed;
         }
@@ -238,8 +237,7 @@ export default class State {
     const curvesState = this.redoStack.pop();
     if (curvesState) {
       this.curves.curves = curvesState.map(c => {
-        const transformed = new Curve(c.name);
-        Object.assign(transformed, c);
+        const transformed = Curve.fromJSON(c);
         if (this.selected.curve && c.id == this.selected.curve.id) {
           this.selected.curve = transformed;
         }

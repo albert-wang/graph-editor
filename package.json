@@ -11,6 +11,7 @@
     "@types/bezier-js": "0.0.8",
     "bezier-js": "^2.4.4",
     "canvasinput": "^1.2.7",
+    "copy-to-clipboard": "^3.2.0",
     "core-js": "^3.4.3",
     "vue": "^2.6.10"
   },

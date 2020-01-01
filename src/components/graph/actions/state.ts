@@ -1,8 +1,10 @@
 import State from "../state";
 import { SelectedPoint, SelectedPointType } from "../state/curves";
-import { ControlPointType, ControlPoint } from "@/shared/curves";
+import { ControlPointType, ControlPoint, Curve } from "@/shared/curves";
 import { assert } from "../util/assert";
 import { Vec2, vec2 } from "@/shared/math";
+
+import copy from "copy-to-clipboard";
 
 export enum StateActionKeys {
   Undo = "undo",
@@ -58,6 +60,9 @@ export default class StateActions {
     };
 
     const events = {
+      [StateActionKeys.Copy]() {
+        copy(JSON.stringify(state.curves.curves, null, 2));
+      },
       [StateActionKeys.DebugShowCurves]() {
         state.curves.curves.forEach(curve => {
           console.table({

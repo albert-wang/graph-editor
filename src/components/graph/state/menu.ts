@@ -214,7 +214,7 @@ export default class Menu {
     const options = [
       this.header("Curve Context Menu"),
       this.spacer(),
-      this.simpleOption("Copy animation code", StateActionKeys.Copy),
+      this.simpleOption("Copy Curves JSON", StateActionKeys.Copy),
       this.simpleOption("Play", "", true, [
         this.header("Playback Speed"),
         this.spacer(),

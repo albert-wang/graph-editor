@@ -110,10 +110,9 @@ class Graph {
 
     this.state.curves.curves = [];
     res.curves.map((c, i) => {
-      const curve = new Curve(c.name || "unnamed");
-      Object.assign(curve, c);
-
-      this.state.curves.addCurve(curve);
+      console.log(c);
+      console.log(Curve.fromJSON(c));
+      this.state.curves.addCurve(Curve.fromJSON(c));
     });
   }
 
