@@ -83,6 +83,11 @@ class Graph {
   }
 
   public close() {
+    this.broadcastChannel.postMessage(
+      JSON.stringify({
+        event: "close"
+      })
+    );
     window.localStorage.removeItem(`status-${this.animationName}`);
   }
 
@@ -112,7 +117,9 @@ class Graph {
     });
   }
 
-  public render(dt: number) {
+  public render(hrt: number) {
+    this.state.update(hrt);
+
     this.state.ctx.clearRect(0, 0, this.state.bounds.x, this.state.bounds.y);
     GridRenderer.render(this.state);
     VerticalRuler.render(this.state);

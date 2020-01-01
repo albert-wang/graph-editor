@@ -215,6 +215,19 @@ export default class Menu {
       this.header("Curve Context Menu"),
       this.spacer(),
       this.simpleOption("Copy animation code", StateActionKeys.Copy),
+      this.simpleOption("Play", "", true, [
+        this.header("Playback Speed"),
+        this.spacer(),
+        this.simpleOption("Play 6fps", StateActionKeys.Play6FPS),
+        this.simpleOption("Play 12fps", StateActionKeys.Play12FPS),
+        this.simpleOption("Play 24fps", StateActionKeys.Play24FPS),
+        this.simpleOption("Play 30fps", StateActionKeys.Play30FPS),
+        this.simpleOption("Play 60fps", StateActionKeys.Play60FPS),
+        this.simpleOption("Play 90fps", StateActionKeys.Play90FPS),
+        this.simpleOption("Play 120fps", StateActionKeys.Play120FPS),
+        this.simpleOption("Play 144fps", StateActionKeys.Play144FPS),
+        this.simpleOption("Play 240fps", StateActionKeys.Play240FPS)
+      ]),
       this.spacer(),
       this.simpleOption(
         "Frame Guide to Selected",
@@ -340,7 +353,6 @@ export default class Menu {
           this.disableBufferTriangles = true;
           return result;
         } else {
-          console.log([root]);
           return [root];
         }
       }

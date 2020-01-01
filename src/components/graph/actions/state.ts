@@ -32,11 +32,31 @@ export enum StateActionKeys {
   EditValue = "edit-value",
   EditPointValue = "edit-point-value",
   EditPointFrame = "edit-point-frame",
-  SubmitEdit = "submit-edit"
+  SubmitEdit = "submit-edit",
+
+  // Playback
+  Play6FPS = "play-6fps",
+  Play12FPS = "play-12fps",
+  Play24FPS = "play-24fps",
+  Play30FPS = "play-30fps",
+  Play60FPS = "play-60fps",
+  Play90FPS = "play-90fps",
+  Play120FPS = "play-120fps",
+  Play144FPS = "play-144fps",
+  Play240FPS = "play-240fps",
+
+  PlayOrPause = "play-or-pause"
 }
 
 export default class StateActions {
   public static dispatch(event: string, mousePosition: Vec2, state: State) {
+    const playback = function(fps: number) {
+      return () => {
+        state.previousPlaybackFPS = fps;
+        state.playbackFPS = fps;
+      };
+    };
+
     const events = {
       [StateActionKeys.DebugShowCurves]() {
         state.curves.curves.forEach(curve => {
@@ -264,6 +284,22 @@ export default class StateActions {
       [StateActionKeys.EditPointValue]() {
         state.editingPointValue = true;
         state.inputField.focus();
+      },
+      [StateActionKeys.Play6FPS]: playback(6),
+      [StateActionKeys.Play12FPS]: playback(12),
+      [StateActionKeys.Play24FPS]: playback(24),
+      [StateActionKeys.Play30FPS]: playback(30),
+      [StateActionKeys.Play60FPS]: playback(60),
+      [StateActionKeys.Play90FPS]: playback(90),
+      [StateActionKeys.Play120FPS]: playback(120),
+      [StateActionKeys.Play144FPS]: playback(144),
+      [StateActionKeys.Play240FPS]: playback(240),
+      [StateActionKeys.PlayOrPause]() {
+        if (state.playbackFPS !== 0) {
+          state.playbackFPS = 0;
+        } else {
+          state.playbackFPS = state.previousPlaybackFPS;
+        }
       }
     };
 

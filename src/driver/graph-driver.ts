@@ -194,6 +194,15 @@ export class Animation {
             });
             break;
           }
+          case "close": {
+            this.overrideFrame = 0;
+            this.curves = this.overrideCurves;
+            this.overrideCurves = [];
+            if (this.editingChannel) {
+              this.editingChannel.close();
+              this.editingChannel = null;
+            }
+          }
         }
       } catch (e) {
         console.error(e);
@@ -260,7 +269,7 @@ export default class GraphDriver {
           ControlPointType.Beizer,
           vec2(60, e),
           vec2(70, e),
-          vec2(54, 0.66)
+          vec2(50, e)
         );
 
         curve.controlPoints.push(scp, ecp);

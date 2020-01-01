@@ -47,6 +47,12 @@ export default class State {
   public editingPointValue: boolean;
   public editingPointFrame: boolean;
 
+  // Playback FPS.
+  public previousPlaybackFPS: number;
+  public playbackFPS: number;
+  private accumulatedTime: number;
+  private lastSeenPlaybackTime: number;
+
   constructor(gs: InitialState) {
     this.selected = new SelectedPoint();
     this.selected.curve = null;
@@ -153,11 +159,44 @@ export default class State {
     this.undoStack = [];
     this.redoStack = [];
     this.lastUndoPushTime = 0;
+    this.playbackFPS = 0;
+    this.accumulatedTime = 0;
+    this.lastSeenPlaybackTime = 0;
+    this.previousPlaybackFPS = 60;
   }
 
   // Menu dispatch functionality
   public dispatch(e: string, mp: Vec2) {
     StateActions.dispatch(e, mp, this);
+  }
+
+  // Playback functionality.
+  public update(hrt: number) {
+    if (this.playbackFPS === 0) {
+      this.lastSeenPlaybackTime = hrt;
+      return;
+    }
+
+    if (this.lastSeenPlaybackTime === 0) {
+      this.lastSeenPlaybackTime = hrt;
+      return;
+    }
+
+    const dt = (hrt - this.lastSeenPlaybackTime) / 1000;
+    this.lastSeenPlaybackTime = hrt;
+
+    this.accumulatedTime += dt;
+    while (this.accumulatedTime >= 1 / this.playbackFPS) {
+      this.accumulatedTime -= 1 / this.playbackFPS;
+      this.grid.setGuidePoint(
+        vec2(this.grid.guidePoint.x + 1, this.grid.guidePoint.y)
+      );
+
+      // 15 frames after the end to show hanging behavior
+      if (this.grid.guidePoint.x > this.curves.maximumFrame() + 15) {
+        this.grid.guidePoint.x = this.curves.minimumFrame();
+      }
+    }
   }
 
   // Undo/redo stack manipulation

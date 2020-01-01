@@ -25,9 +25,6 @@ export default class MenuRenderer {
       path
     );
 
-    // Draw the background
-    // state.grid.project(state
-
     // Draw the options
     ctx.restore();
   }

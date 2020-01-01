@@ -86,7 +86,6 @@ class VerticalRulerRenderer {
     // Render the ruler.
     const location = state.grid.project(state.grid.guidePoint);
     ctx.strokeStyle = Colors.GuideLine;
-    console.log("GUIDE AT", location.y);
 
     ctx.beginPath();
     ctx.moveTo(0, Math.round(location.y) + 0.5);

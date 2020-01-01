@@ -47,7 +47,9 @@ export default class App extends Vue {
 
     this.graph = new Graph(canvas.getContext("2d")!, canvas, bounds);
 
-    this.renderGraph(0);
+    requestAnimationFrame((t: number) => {
+      this.renderGraph(t);
+    });
   }
 
   public keyDown(e: KeyboardEvent) {
@@ -122,11 +124,11 @@ export default class App extends Vue {
 
   public renderGraph(t: number) {
     if (this.graph) {
-      this.graph.render(0);
+      this.graph.render(t);
     }
 
-    requestAnimationFrame(() => {
-      this.renderGraph(0);
+    requestAnimationFrame((t: number) => {
+      this.renderGraph(t);
     });
   }
 }

@@ -6,19 +6,28 @@ export default class KeyboardActions {
   public static shortcuts: Object = {
     ["ctrl+z"]: StateActionKeys.Undo,
     ["ctrl+y"]: StateActionKeys.Redo,
-    ["ctrl+ "]: StateActionKeys.SetGuideFrame,
-    ["shift+ "]: StateActionKeys.SetGuideValue,
+    ["ctrl+Spc"]: StateActionKeys.SetGuideFrame,
+    ["shift+Spc"]: StateActionKeys.SetGuideValue,
     ["s"]: StateActionKeys.SetGuideFrameToSelectedPointFrame,
 
     ["ctrl+i"]: StateActionKeys.InsertKeyframeAllCurves,
     ["i"]: StateActionKeys.InsertKeyframe,
-    ["Escape"]: StateActionKeys.SubmitEdit,
+    ["ESC"]: StateActionKeys.SubmitEdit,
 
-    ["/"]: StateActionKeys.DebugShowCurves
+    ["/"]: StateActionKeys.DebugShowCurves,
+    ["Spc"]: StateActionKeys.PlayOrPause
   };
 
   public static keyDown(e: KeyboardEvent, p: Vec2, state: State) {
     let key = e.key;
+    if (key == "Escape") {
+      key = "ESC";
+    }
+
+    if (key == " ") {
+      key = "Spc";
+    }
+
     if (e.shiftKey) {
       key = `shift+${key}`;
     }
