@@ -237,49 +237,70 @@ export class Animation {
   }
 }
 
+interface Keyframe {
+  frame: number,
+  keyframe: object;
+}
+
 export default class GraphDriver {
+  public static createAnimationWithKeyframes(animation: string, keyframes: Keyframe[]): Animation {
+    const result = new Animation(animation);
+
+    const sortedFrames = keyframes.sort((a: Keyframe, b: Keyframe) {
+      return a.frame - b.frame;
+    });
+
+    // Get all keys.
+    const allKeys = keyframes.flatMap((v) => {
+      return Object.keys(v.keyframe);
+    });
+
+    const uniqueKeys = [...new Set(allKeys)];
+
+    // Foreach key
+    const curves = uniqueKeys.map((k: string) => {
+      const curve = new Curve(k);
+
+      // Foreach frame
+      sortedFrames.forEach((frame: Keyframe) => {
+        if (frame.keyframe.hasOwnProperty(k)) {
+          // If this keyframe affects this property, add in a control point.
+
+          // @ts-ignore
+          const value = frame.keyframe[k] as number;
+          const cp = new ControlPoint(
+            ControlPointType.Beizer,
+            vec2(frame.frame, value),
+            vec2(frame.frame + 10, value),
+            vec2(frame.frame - 10, value)
+          );
+
+          curve.controlPoints.push(cp);
+        }
+      });
+
+      curve.invalidateLUTs();
+      return curve;
+    });
+
+    result.setCurves(curves);
+    return result;
+  }
+
   public static createAnimationWithEndpoints(
     animation: string,
     start: object,
     end: object
   ): Animation {
-    const result = new Animation(animation);
-
-    const keys = Object.keys(start);
-    const curves = keys.map(k => {
-      if (start.hasOwnProperty(k)) {
-        // @ts-ignore
-        const s = start[k];
-
-        // @ts-ignore
-        const e = end[k];
-
-        const curve = new Curve(k);
-
-        const scp = new ControlPoint(
-          ControlPointType.Beizer,
-          vec2(1, s),
-          vec2(11, s),
-          vec2(-9, s)
-        );
-
-        const ecp = new ControlPoint(
-          ControlPointType.Beizer,
-          vec2(60, e),
-          vec2(70, e),
-          vec2(50, e)
-        );
-
-        curve.controlPoints.push(scp, ecp);
-        return curve;
+    return GraphDriver.createAnimationWithKeyframes(animation, [
+      {
+        frame: 1,
+        keyframe: start
+      }, {
+        frame: 60,
+        keyframe: end
       }
-
-      return null;
-    });
-
-    const filteredCurves = curves.filter(x => !!x);
-    result.setCurves(filteredCurves as Curve[]);
-    return result;
+    ]);
   }
 
   public static loadAnimation(animation: string, curves: any[]): Animation {
