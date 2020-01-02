@@ -1,6 +1,5 @@
 import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
 import { vec2 } from "../shared/math";
-import Curves from "@/components/graph/state/curves";
 
 export class Player {
   public static LoopForever: number = -1;
