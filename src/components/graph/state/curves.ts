@@ -1,11 +1,23 @@
-import { vec2, Vec2, add, sub, mul, pointInBox } from "@graph/shared/math";
-import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
+import {
+  vec2,
+  Vec2,
+  add,
+  sub,
+  mul,
+  pointInBox,
+  negate
+} from "@graph/shared/math";
+
+import {
+  Curve,
+  ControlPoint,
+  ControlPointType,
+  isBeizer
+} from "@graph/shared/curves";
 
 import State from ".";
-// @ts-ignore
-import beizer from "bezier-js";
 
-import { assert } from "../util/assert";
+import { exhaustive } from "../util/exhaustive";
 import colors from "../rendering/colors";
 import sizes from "../rendering/sizes";
 import { StateEvent, event, StateActionKeys } from "../actions";
@@ -104,7 +116,7 @@ export default class Curves {
 
           // Select the forward handle iff this is a beizer curve
           if (
-            point.type === ControlPointType.Beizer &&
+            isBeizer(point.type) &&
             squaredDistance(query, point.forwardHandle) < SELECTION_DISTANCE
           ) {
             candidatePoints.push({
@@ -118,7 +130,7 @@ export default class Curves {
           const previous = j > 0 ? curve.controlPoints[j - 1] : null;
           if (
             previous &&
-            previous.type === ControlPointType.Beizer &&
+            isBeizer(previous.type) &&
             squaredDistance(query, point.backwardsHandle) < SELECTION_DISTANCE
           ) {
             candidatePoints.push({
@@ -214,80 +226,19 @@ export default class Curves {
 
   public addPoint(c: Curve, frame: number) {
     const info = c.curveInformationAt(frame);
-    // The requested insertion point is before the first frame
-    if (info.points[0] === null) {
-      assert(info.points[1]);
-      const n = info.points[1]!;
+    const value = c.evaluate(frame);
+    const position = vec2(frame, value);
+    const delta = vec2(info.framesBetween / 4, 0);
+    const prototype = info.points[0] || info.points[1];
 
-      const position = vec2(frame, n.position.y);
-      const delta = vec2(info.framesBetween / 4, 0);
+    const res = new ControlPoint(
+      prototype!.type,
+      position,
+      add(position, delta),
+      sub(position, delta)
+    );
 
-      c.controlPoints.push(
-        new ControlPoint(
-          n.type,
-          position,
-          add(position, delta),
-          sub(position, delta)
-        )
-      );
-    } else if (info.points[1] === null) {
-      assert(info.points[0]);
-      const f = info.points[0]!;
-
-      const position = vec2(frame, f.position.y);
-      const delta = vec2(info.framesBetween / 4, 0);
-
-      c.controlPoints.push(
-        new ControlPoint(
-          f.type,
-          position,
-          add(position, delta),
-          sub(position, delta)
-        )
-      );
-    } else {
-      const f = info.points[0]!;
-      const n = info.points[1]!;
-
-      const delta = vec2(info.framesBetween / 4, 0);
-
-      if (f.type === ControlPointType.Linear) {
-        const y = (n.position.y - f.position.y) * info.t + f.position.y;
-        const position = vec2(frame, y);
-        c.controlPoints.push(
-          new ControlPoint(
-            f.type,
-            position,
-            add(position, delta),
-            sub(position, delta)
-          )
-        );
-      } else {
-        const b = new beizer(
-          f.position.x,
-          f.position.y,
-          f.forwardHandle.x,
-          f.forwardHandle.y,
-          n.backwardsHandle.x,
-          n.backwardsHandle.y,
-          n.position.x,
-          n.position.y
-        );
-
-        const y = b.get(info.t).y;
-        const position = vec2(frame, y);
-        c.controlPoints.push(
-          new ControlPoint(
-            f.type,
-            position,
-            add(position, delta),
-            sub(position, delta)
-          )
-        );
-      }
-    }
-
-    const res = c.controlPoints[c.controlPoints.length - 1];
+    c.controlPoints.push(res);
     this.sortCurve(c);
     return res;
   }
@@ -320,17 +271,61 @@ export default class Curves {
       case SelectedPointType.Backward: {
         const delta = sub(position, point.point.backwardsHandle);
         const modified = mul(delta, scale);
-        point.point.backwardsHandle = add(
-          point.point.backwardsHandle,
-          modified
-        );
+        const next = add(point.point.backwardsHandle, modified);
+
+        next.x = Math.min(next.x, point.point.position.x);
+        point.point.backwardsHandle = next;
+
+        if (point.point.type === ControlPointType.BeizerContinuous) {
+          const p = point.point.backwardsHandle;
+          const negated = negate(sub(p, point.point.position));
+          const forwardDiff = sub(
+            point.point.forwardHandle,
+            point.point.position
+          );
+          if (negated.x === 0) {
+            negated.x = 0.0001;
+          }
+
+          const scale = forwardDiff.x / negated.x;
+          const mirror = add(
+            point.point.position,
+            mul(negated, vec2(scale, scale))
+          );
+
+          point.point.forwardHandle = mirror;
+        }
+
         break;
       }
       case SelectedPointType.Forward: {
         const delta = sub(position, point.point.forwardHandle);
         const modified = mul(delta, scale);
 
-        point.point.forwardHandle = add(point.point.forwardHandle, modified);
+        const next = add(point.point.forwardHandle, modified);
+        next.x = Math.max(next.x, point.point.position.x);
+        point.point.forwardHandle = next;
+
+        if (point.point.type === ControlPointType.BeizerContinuous) {
+          const p = point.point.forwardHandle;
+          const negated = negate(sub(p, point.point.position));
+          const backwardDiff = sub(
+            point.point.backwardsHandle,
+            point.point.position
+          );
+          if (negated.x === 0) {
+            negated.x = -0.0001;
+          }
+
+          const scale = backwardDiff.x / negated.x;
+          const mirror = add(
+            point.point.position,
+            mul(negated, vec2(scale, scale))
+          );
+
+          point.point.backwardsHandle = mirror;
+        }
+
         break;
       }
       case SelectedPointType.Point: {
@@ -349,6 +344,8 @@ export default class Curves {
         point.point.position.x = Math.round(point.point.position.x);
         break;
       }
+      default:
+        exhaustive(point.handle);
     }
 
     this.sortCurve(point.curve);

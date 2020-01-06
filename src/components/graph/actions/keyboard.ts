@@ -45,6 +45,7 @@ export default class KeyboardActions {
 
     // @ts-ignore
     const action = KeyboardActions.shortcuts[key];
+    action.mousePosition = p;
 
     console.log(
       `received key='${e.key}' ctrl=${e.ctrlKey} alt=${e.altKey} shift=${

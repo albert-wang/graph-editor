@@ -1,8 +1,12 @@
 import State from "../state";
-import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
+import {
+  Curve,
+  ControlPoint,
+  ControlPointType,
+  isBeizer
+} from "@graph/shared/curves";
 
-import { assert } from "../util/assert";
-import beizer from "bezier-js";
+import { exhaustive } from "../util/exhaustive";
 
 export default class CurveRenderer {
   public static render(state: State) {
@@ -67,7 +71,7 @@ export default class CurveRenderer {
 
       // Only draw the backwards handle if the backwards point
       // is a beizer.
-      if (prev && prev.type === ControlPointType.Beizer) {
+      if (prev && isBeizer(prev.type)) {
         ctx.beginPath();
         ctx.moveTo(cp.x, cp.y);
         ctx.lineTo(cp2.x, cp2.y);
@@ -79,7 +83,7 @@ export default class CurveRenderer {
       }
 
       // Same with the forward handle and the current point.
-      if (current.type === ControlPointType.Beizer) {
+      if (isBeizer(current.type)) {
         ctx.beginPath();
         ctx.moveTo(cp.x, cp.y);
         ctx.lineTo(cp1.x, cp1.y);
@@ -103,8 +107,6 @@ export default class CurveRenderer {
     ctx: CanvasRenderingContext2D,
     curve: Curve
   ) {
-    assert(curve.controlPoints.length >= 2);
-
     const first = curve.controlPoints[0];
     const last = curve.controlPoints[curve.controlPoints.length - 1];
 
@@ -145,6 +147,17 @@ export default class CurveRenderer {
           this.drawHandles(state, ctx, previous, current, next);
           break;
         }
+        case ControlPointType.LinearFlat: {
+          ctx.beginPath();
+          ctx.moveTo(cp.x, cp.y);
+          ctx.lineTo(np.x, cp.y);
+          ctx.lineTo(np.x, np.y);
+          ctx.stroke();
+
+          this.drawHandles(state, ctx, previous, current, next);
+          break;
+        }
+        case ControlPointType.BeizerContinuous:
         case ControlPointType.Beizer: {
           const cp1 = grid.project(current.forwardHandle);
           const cp2 = grid.project(next.backwardsHandle);
@@ -155,11 +168,11 @@ export default class CurveRenderer {
           ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, np.x, np.y);
           ctx.stroke();
 
-          const b = this.drawHandles(state, ctx, previous, current, next);
+          this.drawHandles(state, ctx, previous, current, next);
           break;
         }
         default:
-          console.error("Unknown curve type");
+          exhaustive(current.type);
       }
     }
 

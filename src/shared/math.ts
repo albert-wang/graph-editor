@@ -34,6 +34,10 @@ function div(a: Vec2, b: Vec2) {
   return vec2(a.x / b.x, a.y / b.y);
 }
 
+function dot(a: Vec2, b: Vec2) {
+  return a.x * b.x + a.y * b.y;
+}
+
 function pointInBox(point: Vec2, upperLeft: Vec2, size: Vec2) {
   const delta = sub(point, upperLeft);
 
@@ -42,10 +46,6 @@ function pointInBox(point: Vec2, upperLeft: Vec2, size: Vec2) {
 
 // See realtime collision detection
 function baycentric(point: Vec2, triangle: Vec2[]): number[] {
-  const dot = (a: Vec2, b: Vec2) => {
-    return a.x * b.x + a.y * b.y;
-  };
-
   const v0 = sub(triangle[1], triangle[0]);
   const v1 = sub(triangle[2], triangle[0]);
   const v2 = sub(point, triangle[0]);
@@ -78,6 +78,7 @@ export {
   sub,
   mul,
   div,
+  dot,
   pointInBox,
   pointInTriangle
 };

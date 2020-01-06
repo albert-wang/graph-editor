@@ -97,7 +97,7 @@ export default class State {
         vec2(-9, 0)
       ),
       new ControlPoint(
-        ControlPointType.Beizer,
+        ControlPointType.BeizerContinuous,
         vec2(60, 10),
         vec2(70, 10),
         vec2(50, 10)
@@ -110,52 +110,6 @@ export default class State {
       )
     ];
     this.curves.addCurve(x);
-
-    const y = new Curve("Y");
-    y.controlPoints = [
-      new ControlPoint(
-        ControlPointType.Beizer,
-        vec2(1, 0),
-        vec2(11, 0),
-        vec2(-9, 0)
-      ),
-      new ControlPoint(
-        ControlPointType.Beizer,
-        vec2(60, 10),
-        vec2(70, 10),
-        vec2(50, 10)
-      ),
-      new ControlPoint(
-        ControlPointType.Linear,
-        vec2(80, 7),
-        vec2(90, 10),
-        vec2(70, 10)
-      )
-    ];
-    this.curves.addCurve(y);
-
-    const z = new Curve("Z");
-    z.controlPoints = [
-      new ControlPoint(
-        ControlPointType.Beizer,
-        vec2(1, 0),
-        vec2(11, 0),
-        vec2(-9, 0)
-      ),
-      new ControlPoint(
-        ControlPointType.Beizer,
-        vec2(60, 10),
-        vec2(70, 10),
-        vec2(50, 10)
-      ),
-      new ControlPoint(
-        ControlPointType.Linear,
-        vec2(80, 7),
-        vec2(90, 10),
-        vec2(70, 10)
-      )
-    ];
-    this.curves.addCurve(z);
 
     this.undoStack = [];
     this.redoStack = [];

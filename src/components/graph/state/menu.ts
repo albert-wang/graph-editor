@@ -9,6 +9,7 @@ import {
 } from "@graph/shared/math";
 import KeyboardActions from "../actions/keyboard";
 import Sizes from "../rendering/sizes";
+import { ControlPointType } from "@/shared/curves";
 
 export enum MenuOptionType {
   Default = 0,
@@ -274,24 +275,38 @@ export default class Menu {
       this.simpleOption("Interpolation", noop, hasSelectedPoint, [
         this.header("Interpolation"),
         this.spacer(),
-        this.simpleOption("Linear", event(StateActionKeys.HandleToLinear)),
-        this.simpleOption("Beizer", event(StateActionKeys.HandleToBeizer)),
-        this.spacer(),
         this.simpleOption(
-          "Smoothstep (1)",
-          event(StateActionKeys.HandleToBeizer)
+          "Linear",
+          event(StateActionKeys.ChangeInterpolationType, vec2(0, 0), {
+            type: ControlPointType.Linear
+          })
         ),
         this.simpleOption(
-          "Smoothstep (2)",
-          event(StateActionKeys.HandleToBeizer)
-        )
+          "Flat",
+          event(StateActionKeys.ChangeInterpolationType, vec2(0, 0), {
+            type: ControlPointType.LinearFlat
+          })
+        ),
+        this.simpleOption(
+          "Beizer",
+          event(StateActionKeys.ChangeInterpolationType, vec2(0, 0), {
+            type: ControlPointType.Beizer
+          })
+        ),
+        this.simpleOption(
+          "Continuous Beizer",
+          event(StateActionKeys.ChangeInterpolationType, vec2(0, 0), {
+            type: ControlPointType.BeizerContinuous
+          })
+        ),
+        this.spacer(),
+        ...this.easings()
       ]),
       this.simpleOption("Handles", noop, hasSelectedPoint, [
         this.header("Handles"),
         this.spacer(),
         this.simpleOption("Mirror handles (value)", noop),
-        this.simpleOption("Mirror handles (frame)", noop),
-        this.simpleOption("Step", event(StateActionKeys.HandleToLinear))
+        this.simpleOption("Mirror handles (frame)", noop)
       ]),
       this.simpleOption(
         "Insert keyframe",
@@ -316,6 +331,26 @@ export default class Menu {
     this.setOptionTree({
       options: options
     });
+  }
+
+  private easings(): MenuOption[] {
+    const easing = (name: string, values: number[]) => {
+      return this.simpleOption(
+        name,
+        event(StateActionKeys.UseFixedControlPoints, vec2(0, 0), {
+          first: [values[0], values[1]],
+          second: [values[2], values[3]]
+        })
+      );
+    };
+
+    return [
+      easing("Smoothstep (1)", [0.25, 0, 0.75, 1]),
+      easing("Smoothstep (2)", [0.35, 0, 0.65, 1]),
+      easing("Sine in", [0.47, 0, 0.745, 0.715]),
+      easing("Sine out", [0.39, 0.575, 0.565, 1]),
+      easing("Sine in-out", [0.445, 0.05, 0.55, 0.95])
+    ];
   }
 
   private optionPathUnderMouse(): MenuOption[] {

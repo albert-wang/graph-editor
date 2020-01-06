@@ -18,11 +18,13 @@ enum StateActionKeys {
   SetGuideValue = "set-guide-value",
   MoveScreen = "move-screen",
 
-  HandleToLinear = "handle-to-linear",
-  HandleToBeizer = "handle-to-beizer",
+  ChangeInterpolationType = "change-interpolation-type",
+  UseFixedControlPoints = "use-fixed-control-points",
 
   SnapFrame = "snap-to-frame",
   SnapValue = "snap-to-value",
+
+  ContinuousHandles = "make-continuous",
 
   // Properties clicks
   ToggleVisible = "toggle-visible",

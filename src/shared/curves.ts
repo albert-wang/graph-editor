@@ -5,7 +5,19 @@ import beizer from "bezier-js";
 
 export enum ControlPointType {
   Linear = 0,
-  Beizer = 1
+  Beizer = 1,
+  BeizerContinuous = 2,
+  LinearFlat = 3
+}
+
+export function isLinear(t: ControlPointType): boolean {
+  return !isBeizer(t);
+}
+
+export function isBeizer(t: ControlPointType): boolean {
+  return (
+    t === ControlPointType.BeizerContinuous || t === ControlPointType.Beizer
+  );
 }
 
 export class ControlPoint {
@@ -187,41 +199,48 @@ export class Curve {
         return (b - a) * t + a;
       };
 
-      if (f.type === ControlPointType.Linear) {
-        const y = lerp(f.position.y, n.position.y, info.t);
-        return y;
-      } else {
-        let lut = f.cachedLUT;
-        if (lut.length === 0) {
-          const b = new beizer(
-            f.position.x,
-            f.position.y,
-            f.forwardHandle.x,
-            f.forwardHandle.y,
-            n.backwardsHandle.x,
-            n.backwardsHandle.y,
-            n.position.x,
-            n.position.y
-          );
+      switch (f.type) {
+        case ControlPointType.Linear:
+          return lerp(f.position.y, n.position.y, info.t);
+        case ControlPointType.LinearFlat:
+          return f.position.y;
+        case ControlPointType.Beizer:
+        case ControlPointType.BeizerContinuous: {
+          let lut = f.cachedLUT;
+          if (lut.length === 0) {
+            const b = new beizer(
+              f.position.x,
+              f.position.y,
+              f.forwardHandle.x,
+              f.forwardHandle.y,
+              n.backwardsHandle.x,
+              n.backwardsHandle.y,
+              n.position.x,
+              n.position.y
+            );
 
-          lut = b.getLUT(128);
-          f.cachedLUT = lut;
-        }
+            lut = b.getLUT(128);
+            f.cachedLUT = lut;
+          }
 
-        const bounds = this.lutLookup(frame, lut);
-        if (!bounds[0] && bounds[1]) {
-          return bounds[1].y;
-        } else if (!bounds[1] && bounds[0]) {
-          return bounds[0].y;
-        } else if (bounds[0] && bounds[1]) {
-          return lerp(
-            bounds[0].y,
-            bounds[1].y,
-            (frame - bounds[0].x) / (bounds[1].x - bounds[0].x)
-          );
-        } else {
-          return 0;
+          const bounds = this.lutLookup(frame, lut);
+          if (!bounds[0] && bounds[1]) {
+            return bounds[1].y;
+          } else if (!bounds[1] && bounds[0]) {
+            return bounds[0].y;
+          } else if (bounds[0] && bounds[1]) {
+            return lerp(
+              bounds[0].y,
+              bounds[1].y,
+              (frame - bounds[0].x) / (bounds[1].x - bounds[0].x)
+            );
+          } else {
+            return 0;
+          }
         }
+        default:
+          console.error(`Unknown curve type: ${ControlPointType[f.type]}`);
+          return f.position.y;
       }
     }
   }

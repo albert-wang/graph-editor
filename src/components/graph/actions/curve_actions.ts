@@ -1,10 +1,9 @@
 import State from "../state";
 import { StateActionKeys } from "./action_keys";
 import { StateEvent } from ".";
-import { vec2 } from "@graph/shared/math";
-import { assert } from "../util/assert";
+import { vec2, sub, mul, add } from "@graph/shared/math";
 import { SelectedPoint } from "../state/curves";
-import { ControlPointType } from "@graph/shared/curves";
+import { ControlPointType, isBeizer } from "@graph/shared/curves";
 
 export class CurveActions {
   public static events(e: StateEvent, state: State) {
@@ -40,42 +39,66 @@ export class CurveActions {
         state.selected = point;
       },
 
-      [StateActionKeys.HandleToLinear]() {
+      [StateActionKeys.ChangeInterpolationType]() {
         state.pushUndoState();
 
         const selectedPoint = state.selected;
-        assert(selectedPoint);
-        assert(selectedPoint!.point);
-
-        selectedPoint!.point!.type = ControlPointType.Linear;
+        selectedPoint!.point!.type = e.data.type as ControlPointType;
       },
 
-      [StateActionKeys.HandleToBeizer]() {
+      [StateActionKeys.UseFixedControlPoints]() {
+        const first: number[] = e.data.first;
+        const second: number[] = e.data.second;
+
+        // Get the next point after this one, since we have to modify its backwards handle too.
+        const selected = state.selected;
+        if (!selected || !selected.point || !selected.curve) {
+          return;
+        }
+
+        const info = selected.curve.curveInformationAt(
+          selected.point.position.x
+        );
+        if (!info.points[1]) {
+          return;
+        }
+
+        const current = selected.point;
+        const next = info.points[1];
+
+        if (!isBeizer(current.type)) {
+          return;
+        }
+
         state.pushUndoState();
+        const distance = sub(next.position, current.position);
+        const cp1 = add(
+          current.position,
+          mul(vec2(first[0], first[1]), distance)
+        );
+        const cp2 = add(
+          current.position,
+          mul(vec2(second[0], second[1]), distance)
+        );
 
-        const selectedPoint = state.selected;
-        assert(selectedPoint);
-        assert(selectedPoint!.point);
-
-        selectedPoint!.point!.type = ControlPointType.Beizer;
+        current.forwardHandle = cp1;
+        next.backwardsHandle = cp2;
       },
+
+      [StateActionKeys.ContinuousHandles]() {},
 
       [StateActionKeys.SnapFrame]() {
         state.pushUndoState();
 
-        const selectedPoint = state.selected;
-        assert(selectedPoint);
-        assert(selectedPoint!.point);
-
-        // TODO: This doesn't sort the points
-        selectedPoint!.point!.position.x = state.grid.guidePoint.x;
+        state.curves.modifyPoint(
+          state.selected,
+          state.grid.guidePoint,
+          vec2(1, 0)
+        );
       },
 
       [StateActionKeys.SnapValue]() {
         state.pushUndoState();
-        const selectedPoint = state.selected;
-        assert(selectedPoint);
-        assert(selectedPoint!.point);
 
         state.curves.modifyPoint(
           state.selected,
