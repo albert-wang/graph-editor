@@ -1,5 +1,6 @@
 import State from "../state";
 import Colors from "./colors";
+import { vec2 } from "@graph/shared/math";
 
 export default class GridRenderer {
   public static render(state: State) {
@@ -7,6 +8,19 @@ export default class GridRenderer {
 
     ctx.fillStyle = Colors.GridBackground;
     ctx.fillRect(0, 0, state.bounds.x, state.bounds.y);
+
+    const minframe = state.curves.minimumFrame();
+    const maxframe = state.curves.maximumFrame();
+
+    const minframePosition = state.grid.project(vec2(minframe, 0));
+    const maxframePosition = state.grid.project(vec2(maxframe, 0));
+    ctx.fillStyle = Colors.ActiveGridBackground;
+    ctx.fillRect(
+      minframePosition.x,
+      0,
+      maxframePosition.x - minframePosition.x,
+      state.bounds.y
+    );
 
     const xstep = state.grid.horizontalPixelStep;
     const xstart = state.grid.horizontalPixelStart;

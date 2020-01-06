@@ -1,6 +1,7 @@
 export default {
   Ruler: "#333333",
   GridBackground: "#444444",
+  ActiveGridBackground: "#4a4a4a",
   PropertiesBackground: "#4f4f4f",
   Text: "#cccccc",
   BrightText: "#dfdfdf",

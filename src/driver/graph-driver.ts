@@ -166,8 +166,6 @@ export class Animation {
       curves = this.overrideCurves;
     }
 
-    console.log("f=", f);
-
     curves.forEach(c => {
       if (output.hasOwnProperty(c.name)) {
         // @ts-ignore
