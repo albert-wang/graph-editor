@@ -1,8 +1,11 @@
 import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
 import { vec2 } from "../shared/math";
 
+type FrameCallback = (p: Player) => void;
+
 export class Player {
   public static LoopForever: number = -1;
+  public onframe: FrameCallback[];
 
   public frame: number = 0;
 
@@ -16,6 +19,7 @@ export class Player {
 
   constructor(anim: Animation) {
     this.sourceAnimation = anim;
+    this.onframe = [];
   }
 
   public loop(n: number) {
@@ -49,7 +53,7 @@ export class Player {
     }
 
     if (this.frame >= this.sourceAnimation.maximumFrame()) {
-      this.frame = this.sourceAnimation.maximumFrame();
+      this.frame = this.sourceAnimation.minimumFrame();
       this.accumulatedTime = 0;
 
       if (this.loopCount > 0) {
@@ -73,13 +77,40 @@ export class Player {
   public advance(dt: number) {
     this.accumulatedTime += dt;
     while (this.accumulatedTime >= 1 / this.fps) {
+      const originalFrame = this.frame;
       this.frame += 1;
       this.accumulatedTime -= 1 / this.fps;
-    }
 
-    if (this.frame >= this.sourceAnimation.maximumFrame()) {
-      this.frame = this.sourceAnimation.minimumFrame();
+      this.frame = Math.min(this.frame, this.sourceAnimation.maximumFrame());
+      if (originalFrame !== this.frame) {
+        this.trigger();
+      }
     }
+  }
+
+  public on(v: "frame", f: FrameCallback): FrameCallback {
+    this.onframe.push(f);
+    return f;
+  }
+
+  public off(v: "frame", f: FrameCallback) {
+    this.onframe = this.onframe.filter(c => {
+      return c != f;
+    });
+  }
+
+  private trigger() {
+    this.onframe.forEach(c => {
+      c(this);
+    });
+  }
+
+  public synthesizeObject(): object {
+    return this.sourceAnimation.synthesizeObjectAtFrame(this.frame);
+  }
+
+  public evaluate<T extends object>(output: T) {
+    return this.sourceAnimation.evaluate(this.frame, output);
   }
 }
 
@@ -134,6 +165,8 @@ export class Animation {
       f = this.overrideFrame;
       curves = this.overrideCurves;
     }
+
+    console.log("f=", f);
 
     curves.forEach(c => {
       if (output.hasOwnProperty(c.name)) {
@@ -238,20 +271,23 @@ export class Animation {
 }
 
 interface Keyframe {
-  frame: number,
+  frame: number;
   keyframe: object;
 }
 
 export default class GraphDriver {
-  public static createAnimationWithKeyframes(animation: string, keyframes: Keyframe[]): Animation {
+  public static createAnimationWithKeyframes(
+    animation: string,
+    keyframes: Keyframe[]
+  ): Animation {
     const result = new Animation(animation);
 
-    const sortedFrames = keyframes.sort((a: Keyframe, b: Keyframe) {
+    const sortedFrames = keyframes.sort((a: Keyframe, b: Keyframe) => {
       return a.frame - b.frame;
     });
 
     // Get all keys.
-    const allKeys = keyframes.flatMap((v) => {
+    const allKeys = keyframes.flatMap(v => {
       return Object.keys(v.keyframe);
     });
 
@@ -296,7 +332,8 @@ export default class GraphDriver {
       {
         frame: 1,
         keyframe: start
-      }, {
+      },
+      {
         frame: 60,
         keyframe: end
       }

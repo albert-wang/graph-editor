@@ -8,6 +8,7 @@ import beizer from "bezier-js";
 import { assert } from "../util/assert";
 import colors from "../rendering/colors";
 import sizes from "../rendering/sizes";
+import { StateEvent, event, StateActionKeys } from "../actions";
 
 export enum SelectedPointType {
   Point = 0,
@@ -353,7 +354,7 @@ export default class Curves {
     this.sortCurve(point.curve);
   }
 
-  public propertiesClick(query: Vec2): string {
+  public propertiesClick(query: Vec2): StateEvent {
     const offsets = sizes.PropertyColumnOffsets;
     const left = this.parent.bounds.x - sizes.PropertiesWidth;
     const selectedProperty = function(
@@ -381,7 +382,8 @@ export default class Curves {
         } else if (this.parent.selected.handle == SelectedPointType.Backward) {
           this.parent.inputField.value(point.backwardsHandle.x.toFixed(3));
         }
-        return "edit-point-frame";
+
+        return event(StateActionKeys.EditPointFrame);
       }
     }
 
@@ -397,7 +399,8 @@ export default class Curves {
         } else if (this.parent.selected.handle == SelectedPointType.Backward) {
           this.parent.inputField.value(point.backwardsHandle.y.toFixed(3));
         }
-        return "edit-point-value";
+
+        return event(StateActionKeys.EditPointValue);
       }
     }
 
@@ -413,7 +416,8 @@ export default class Curves {
         this.parent.inputField.x(left + offsets.name);
         this.parent.inputField.y(heightOffset - 10);
         this.parent.inputField.value(selection.curve.name);
-        return "edit-name";
+
+        return event(StateActionKeys.EditName);
       }
 
       if (selectedProperty(heightOffset, offsets.value, offsets.visible)) {
@@ -433,24 +437,26 @@ export default class Curves {
             selection.curve.evaluate(this.parent.grid.guidePoint.x)
           );
 
-          return "edit-value";
+          return event(StateActionKeys.EditValue);
         }
       }
 
       if (selectedProperty(heightOffset, offsets.visible, offsets.locked)) {
         this.parent.selected.selectPoint(selection);
-        return "toggle-visible";
+
+        return event(StateActionKeys.ToggleVisible);
       }
 
       if (
         selectedProperty(heightOffset, offsets.locked, sizes.PropertiesWidth)
       ) {
         this.parent.selected.selectPoint(selection);
-        return "toggle-locked";
+
+        return event(StateActionKeys.ToggleLocked);
       }
     }
 
-    return "";
+    return event("");
   }
 
   public maximumFrame(): number {

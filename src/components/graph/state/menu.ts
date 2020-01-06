@@ -1,9 +1,8 @@
 import State from "../state";
-import { StateActionKeys } from "../actions";
+import { StateActionKeys, StateEvent, event } from "../actions";
 import {
   Vec2,
   vec2,
-  sub,
   add,
   pointInBox,
   pointInTriangle
@@ -20,7 +19,7 @@ export enum MenuOptionType {
 export interface MenuOption {
   type: MenuOptionType;
   label: string;
-  action: string;
+  action: StateEvent;
   shortcut: string;
 
   children: MenuOption[];
@@ -53,7 +52,7 @@ export default class Menu {
 
   private simpleOption(
     label: string,
-    action: string,
+    action: StateEvent,
     enabled: boolean = true,
     children: MenuOption[] = []
   ): MenuOption {
@@ -81,7 +80,7 @@ export default class Menu {
     return {
       type: MenuOptionType.Spacer,
       label: "",
-      action: "",
+      action: event(""),
       shortcut: "",
       children: [],
       computedOffset: 0,
@@ -93,7 +92,7 @@ export default class Menu {
     return {
       type: MenuOptionType.Header,
       label: name,
-      action: "",
+      action: event(""),
       shortcut: "",
       children: [],
       computedOffset: 0,
@@ -137,7 +136,7 @@ export default class Menu {
     this.visible = false;
   }
 
-  public click(v: Vec2): string {
+  public click(v: Vec2): StateEvent {
     if (this.visible) {
       this.mousePosition = v;
       this.optionPath = this.optionPathUnderMouse();
@@ -162,7 +161,7 @@ export default class Menu {
       }
     }
 
-    return "";
+    return event("");
   }
 
   public setMousePosition(v: Vec2) {
@@ -211,58 +210,105 @@ export default class Menu {
       hasSelectedCurve = true;
     }
 
+    const noop = event("");
+
     const options = [
       this.header("Curve Context Menu"),
       this.spacer(),
-      this.simpleOption("Copy Curves JSON", StateActionKeys.Copy),
-      this.simpleOption("Play", "", true, [
+      this.simpleOption("Copy Curves JSON", event(StateActionKeys.Copy)),
+      this.simpleOption("Play", noop, true, [
         this.header("Playback Speed"),
         this.spacer(),
-        this.simpleOption("Play 6fps", StateActionKeys.Play6FPS),
-        this.simpleOption("Play 12fps", StateActionKeys.Play12FPS),
-        this.simpleOption("Play 24fps", StateActionKeys.Play24FPS),
-        this.simpleOption("Play 30fps", StateActionKeys.Play30FPS),
-        this.simpleOption("Play 60fps", StateActionKeys.Play60FPS),
-        this.simpleOption("Play 90fps", StateActionKeys.Play90FPS),
-        this.simpleOption("Play 120fps", StateActionKeys.Play120FPS),
-        this.simpleOption("Play 144fps", StateActionKeys.Play144FPS),
-        this.simpleOption("Play 240fps", StateActionKeys.Play240FPS)
+        this.simpleOption(
+          "Play 6fps",
+          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 6 })
+        ),
+        this.simpleOption(
+          "Play 12fps",
+          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 12 })
+        ),
+        this.simpleOption(
+          "Play 24fps",
+          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 24 })
+        ),
+        this.simpleOption(
+          "Play 30fps",
+          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 30 })
+        ),
+        this.simpleOption(
+          "Play 60fps",
+          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 60 })
+        ),
+        this.simpleOption(
+          "Play 90fps",
+          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 90 })
+        ),
+        this.simpleOption(
+          "Play 120fps",
+          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 120 })
+        ),
+        this.simpleOption(
+          "Play 144fps",
+          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 144 })
+        ),
+        this.simpleOption(
+          "Play 240fps",
+          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 240 })
+        )
       ]),
       this.spacer(),
       this.simpleOption(
         "Frame Guide to Selected",
-        StateActionKeys.SetGuideFrameToSelectedPointFrame,
+        event(StateActionKeys.SetGuideFrameToSelectedPointFrame),
         hasSelectedPoint
       ),
-      this.simpleOption("Move Frame Guide", StateActionKeys.SetGuideFrame),
-      this.simpleOption("Move Value Guide", StateActionKeys.SetGuideValue),
+      this.simpleOption(
+        "Move Frame Guide",
+        event(StateActionKeys.SetGuideFrame)
+      ),
+      this.simpleOption(
+        "Move Value Guide",
+        event(StateActionKeys.SetGuideValue)
+      ),
       this.spacer(),
-      this.simpleOption("Interpolation", "", hasSelectedPoint, [
+      this.simpleOption("Interpolation", noop, hasSelectedPoint, [
         this.header("Interpolation"),
         this.spacer(),
-        this.simpleOption("Linear", StateActionKeys.HandleToLinear),
-        this.simpleOption("Beizer", StateActionKeys.HandleToBeizer),
+        this.simpleOption("Linear", event(StateActionKeys.HandleToLinear)),
+        this.simpleOption("Beizer", event(StateActionKeys.HandleToBeizer)),
         this.spacer(),
-        this.simpleOption("Smoothstep (1)", StateActionKeys.HandleToBeizer),
-        this.simpleOption("Smoothstep (2)", StateActionKeys.HandleToBeizer)
+        this.simpleOption(
+          "Smoothstep (1)",
+          event(StateActionKeys.HandleToBeizer)
+        ),
+        this.simpleOption(
+          "Smoothstep (2)",
+          event(StateActionKeys.HandleToBeizer)
+        )
       ]),
-      this.simpleOption("Handles", "", hasSelectedPoint, [
+      this.simpleOption("Handles", noop, hasSelectedPoint, [
         this.header("Handles"),
         this.spacer(),
-        this.simpleOption("Mirror handles (value)", ""),
-        this.simpleOption("Mirror handles (frame)", ""),
-        this.simpleOption("Step", StateActionKeys.HandleToLinear)
+        this.simpleOption("Mirror handles (value)", noop),
+        this.simpleOption("Mirror handles (frame)", noop),
+        this.simpleOption("Step", event(StateActionKeys.HandleToLinear))
       ]),
-      this.simpleOption("Insert keyframe", StateActionKeys.InsertKeyframe),
+      this.simpleOption(
+        "Insert keyframe",
+        event(StateActionKeys.InsertKeyframe)
+      ),
       this.simpleOption(
         "Insert keyframe in all curves",
-        StateActionKeys.InsertKeyframeAllCurves
+        event(StateActionKeys.InsertKeyframeAllCurves)
       ),
-      this.simpleOption("Snap", "", hasSelectedPoint, [
+      this.simpleOption("Snap", noop, hasSelectedPoint, [
         this.header("Snap ..."),
         this.spacer(),
-        this.simpleOption("To selected frame", StateActionKeys.SnapFrame),
-        this.simpleOption("Value to guide", StateActionKeys.SnapValue)
+        this.simpleOption(
+          "To selected frame",
+          event(StateActionKeys.SnapFrame)
+        ),
+        this.simpleOption("Value to guide", event(StateActionKeys.SnapValue))
       ])
     ];
 

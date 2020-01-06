@@ -34,15 +34,7 @@ enum StateActionKeys {
   SubmitEdit = "submit-edit",
 
   // Playback
-  Play6FPS = "play-6fps",
-  Play12FPS = "play-12fps",
-  Play24FPS = "play-24fps",
-  Play30FPS = "play-30fps",
-  Play60FPS = "play-60fps",
-  Play90FPS = "play-90fps",
-  Play120FPS = "play-120fps",
-  Play144FPS = "play-144fps",
-  Play240FPS = "play-240fps",
+  PlayAtFPS = "play-at-fps",
 
   PlayOrPause = "play-or-pause"
 }

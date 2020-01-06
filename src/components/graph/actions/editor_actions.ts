@@ -1,16 +1,17 @@
 import State from "../state";
 import { StateActionKeys } from "./action_keys";
-import { Vec2, vec2 } from "@graph/shared/math";
+import { vec2 } from "@graph/shared/math";
 import { SelectedPoint, SelectedPointType } from "../state/curves";
 import { ControlPoint } from "@graph/shared/curves";
+import { StateEvent } from ".";
 
 import copy from "copy-to-clipboard";
 
-export default class EditorActions {
-  public static events(mousePosition: Vec2, state: State) {
+export class EditorActions {
+  public static events(e: StateEvent, state: State) {
     return {
       [StateActionKeys.Zoom]() {
-        state.grid.zoom(-mousePosition.y);
+        state.grid.zoom(-e.mousePosition.y);
       },
 
       [StateActionKeys.Copy]() {
@@ -32,12 +33,12 @@ export default class EditorActions {
       },
 
       [StateActionKeys.SetGuideFrame]() {
-        const p = state.grid.unproject(mousePosition);
+        const p = state.grid.unproject(e.mousePosition);
         state.grid.setGuidePoint(vec2(p.x, state.grid.guidePoint.y));
       },
 
       [StateActionKeys.SetGuideValue]() {
-        const p = state.grid.unproject(mousePosition);
+        const p = state.grid.unproject(e.mousePosition);
         state.grid.setGuidePoint(vec2(state.grid.guidePoint.x, p.y));
       },
 
@@ -134,12 +135,12 @@ export default class EditorActions {
       },
 
       [StateActionKeys.OpenMenu]() {
-        state.menu.setPosition(mousePosition);
+        state.menu.setPosition(e.mousePosition);
         state.menu.show();
       },
 
       [StateActionKeys.MoveScreen]() {
-        state.grid.pixelMove(vec2(-mousePosition.x, mousePosition.y));
+        state.grid.pixelMove(vec2(-e.mousePosition.x, e.mousePosition.y));
       }
     };
   }

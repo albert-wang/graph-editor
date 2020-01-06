@@ -4,7 +4,7 @@ import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
 import GridState from "./grid";
 import Curves, { SelectedPoint } from "./curves";
 import Menu from "./menu";
-import StateActions, { StateActionKeys } from "../actions";
+import { StateActions, StateActionKeys, StateEvent, event } from "../actions";
 
 // @ts-ignore
 import CanvasInput from "../3rdparty/canvasinput";
@@ -82,7 +82,7 @@ export default class State {
       boxShadow: "0px 0px 0px #000",
       innerShadow: "0px 0px 0px #000",
       onsubmit: () => {
-        this.dispatch(StateActionKeys.SubmitEdit, vec2(0, 0));
+        this.dispatch(event(StateActionKeys.SubmitEdit));
       }
     });
 
@@ -167,8 +167,8 @@ export default class State {
   }
 
   // Menu dispatch functionality
-  public dispatch(e: string, mp: Vec2) {
-    StateActions.dispatch(e, mp, this);
+  public dispatch(e: StateEvent) {
+    StateActions.dispatch(e, this);
   }
 
   public isEditing() {

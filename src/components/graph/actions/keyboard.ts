@@ -1,24 +1,24 @@
-import StateActions, { StateActionKeys } from ".";
+import { StateActions, StateActionKeys, event } from ".";
 import State from "../state";
 import { Vec2, vec2 } from "../../../shared/math";
 
 export default class KeyboardActions {
   public static shortcuts: Object = {
-    ["ctrl+z"]: StateActionKeys.Undo,
-    ["ctrl+y"]: StateActionKeys.Redo,
-    ["ctrl+c"]: StateActionKeys.Copy,
-    ["ctrl+Spc"]: StateActionKeys.SetGuideFrame,
-    ["shift+Spc"]: StateActionKeys.SetGuideValue,
-    ["s"]: StateActionKeys.SetGuideFrameToSelectedPointFrame,
+    ["ctrl+z"]: event(StateActionKeys.Undo),
+    ["ctrl+y"]: event(StateActionKeys.Redo),
+    ["ctrl+c"]: event(StateActionKeys.Copy),
+    ["ctrl+Spc"]: event(StateActionKeys.SetGuideFrame),
+    ["shift+Spc"]: event(StateActionKeys.SetGuideValue),
+    ["s"]: event(StateActionKeys.SetGuideFrameToSelectedPointFrame),
 
-    ["ctrl+i"]: StateActionKeys.InsertKeyframeAllCurves,
-    ["i"]: StateActionKeys.InsertKeyframe,
-    ["ESC"]: StateActionKeys.SubmitEdit,
+    ["ctrl+i"]: event(StateActionKeys.InsertKeyframeAllCurves),
+    ["i"]: event(StateActionKeys.InsertKeyframe),
+    ["ESC"]: event(StateActionKeys.SubmitEdit),
 
-    ["/"]: StateActionKeys.DebugShowCurves,
-    ["Spc"]: StateActionKeys.PlayOrPause,
-    ["+"]: { key: StateActionKeys.Zoom, value: vec2(0, -120) },
-    ["-"]: { key: StateActionKeys.Zoom, value: vec2(0, 120) }
+    ["/"]: event(StateActionKeys.DebugShowCurves),
+    ["Spc"]: event(StateActionKeys.PlayOrPause),
+    ["+"]: event(StateActionKeys.Zoom, vec2(0, -120)),
+    ["-"]: event(StateActionKeys.Zoom, vec2(0, 120))
   };
 
   public static keyDown(e: KeyboardEvent, p: Vec2, state: State) {
@@ -53,11 +53,7 @@ export default class KeyboardActions {
     );
 
     if (action) {
-      if (action.key && action.value) {
-        StateActions.dispatch(action.key, action.value, state);
-      } else {
-        StateActions.dispatch(action, p, state);
-      }
+      StateActions.dispatch(action, state);
     }
   }
 }

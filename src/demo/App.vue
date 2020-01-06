@@ -26,6 +26,12 @@ export default class App extends Vue {
   animation: Animation;
   player: Player;
 
+  values: AnimationStruct = {
+    X: 0,
+    Y: 0,
+    Z: 0
+  };
+
   constructor() {
     super();
 
@@ -44,6 +50,9 @@ export default class App extends Vue {
     this.player = this.animation.player();
     this.player.loop(Player.LoopForever);
     this.player.play();
+    this.player.on("frame", (curve: Player) => {
+      curve.evaluate(this.values);
+    });
   }
 
   edit() {
@@ -51,36 +60,15 @@ export default class App extends Vue {
   }
 
   public get X() {
-    const v: AnimationStruct = {
-      X: 0,
-      Y: 0,
-      Z: 0
-    };
-
-    this.animation.evaluate(this.player.frame, v);
-    return v.X;
+    return this.values.X;
   }
 
   public get Y() {
-    const v: AnimationStruct = {
-      X: 0,
-      Y: 0,
-      Z: 0
-    };
-
-    this.animation.evaluate(this.player.frame, v);
-    return v.Y;
+    return this.values.Y;
   }
 
   public get Z() {
-    const v: AnimationStruct = {
-      X: 0,
-      Y: 0,
-      Z: 0
-    };
-
-    this.animation.evaluate(this.player.frame, v);
-    return v.Z;
+    return this.values.Z;
   }
 }
 </script>

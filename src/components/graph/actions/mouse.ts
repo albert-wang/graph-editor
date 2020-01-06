@@ -3,11 +3,11 @@ import { Vec2, vec2, mul } from "../../../shared/math";
 
 import { DragEvent } from "../directives/middle-drag";
 import sizes from "../rendering/sizes";
-import { StateActionKeys } from ".";
+import { StateActionKeys, event } from ".";
 
 export default class MouseActions {
   public static wheel(e: WheelEvent, state: State) {
-    state.dispatch(StateActionKeys.Zoom, vec2(e.deltaX, e.deltaY));
+    state.dispatch(event(StateActionKeys.Zoom, vec2(e.deltaX, e.deltaY)));
   }
 
   public static move(e: MouseEvent, state: State) {
@@ -18,10 +18,12 @@ export default class MouseActions {
 
   public static middleDrag(e: DragEvent, state: State) {
     if (state.isEditing()) {
-      state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
+      state.dispatch(event(StateActionKeys.SubmitEdit, e.mousePosition));
     }
 
-    state.dispatch(StateActionKeys.MoveScreen, vec2(e.delta.x, e.delta.y));
+    state.dispatch(
+      event(StateActionKeys.MoveScreen, vec2(e.delta.x, e.delta.y))
+    );
   }
 
   public static leftDrag(e: DragEvent, state: State) {
@@ -34,8 +36,8 @@ export default class MouseActions {
       e.startingPosition.y < sizes.HorizontalRulerHeight &&
       e.startingPosition.x < state.bounds.x - sizes.PropertiesWidth
     ) {
-      state.dispatch(StateActionKeys.SetGuideFrame, e.mousePosition);
-      state.dispatch(StateActionKeys.SetGuideValue, e.mousePosition);
+      state.dispatch(event(StateActionKeys.SetGuideFrame, e.mousePosition));
+      state.dispatch(event(StateActionKeys.SetGuideValue, e.mousePosition));
       return;
     }
 
@@ -43,7 +45,7 @@ export default class MouseActions {
     if (e.isClick) {
       // If this is currently editing a text field, try to submit it
       if (state.isEditing()) {
-        state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
+        state.dispatch(event(StateActionKeys.SubmitEdit, e.mousePosition));
       }
 
       // If the menu is visible, try to click in the menu
@@ -52,7 +54,8 @@ export default class MouseActions {
 
         const dispatch = state.menu.click(e.mousePosition);
         if (dispatch) {
-          state.dispatch(dispatch, state.menu.mousePositionOnOpen);
+          dispatch.mousePosition = state.menu.mousePositionOnOpen;
+          state.dispatch(dispatch);
         }
         return;
       }
@@ -64,13 +67,14 @@ export default class MouseActions {
         // This is a properties click, process it.
         const dispatch = state.curves.propertiesClick(e.mousePosition);
         if (dispatch) {
-          state.dispatch(dispatch, e.mousePosition);
+          dispatch.mousePosition = e.mousePosition;
+          state.dispatch(dispatch);
         }
         return;
       }
 
       // Otherwise, try to click a point.
-      state.dispatch(StateActionKeys.SelectPoint, e.mousePosition);
+      state.dispatch(event(StateActionKeys.SelectPoint, e.mousePosition));
       return;
     }
 
@@ -101,9 +105,9 @@ export default class MouseActions {
         return;
       }
 
-      state.dispatch(StateActionKeys.SubmitEdit, e.mousePosition);
-      state.dispatch(StateActionKeys.SelectPoint, e.mousePosition);
-      state.dispatch(StateActionKeys.OpenMenu, e.mousePosition);
+      state.dispatch(event(StateActionKeys.SubmitEdit, e.mousePosition));
+      state.dispatch(event(StateActionKeys.SelectPoint, e.mousePosition));
+      state.dispatch(event(StateActionKeys.OpenMenu, e.mousePosition));
     }
   }
 }

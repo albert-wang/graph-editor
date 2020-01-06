@@ -1,24 +1,35 @@
 import State from "../state";
-import { ControlPointType, ControlPoint, Curve } from "@graph/shared/curves";
 import { Vec2, vec2 } from "@graph/shared/math";
+
+import { ControlPointType } from "@graph/shared/curves";
 import { StateActionKeys } from "./action_keys";
 
-import EditorActions from "./editor_actions";
-import CurveActions from "./curve_actions";
+import { EditorActions } from "./editor_actions";
+import { CurveActions } from "./curve_actions";
 
-export { StateActionKeys };
-export default class StateActions {
-  public static dispatch(event: string, mousePosition: Vec2, state: State) {
-    const playback = function(fps: number) {
-      return () => {
-        state.previousPlaybackFPS = fps;
-        state.playbackFPS = fps;
-      };
-    };
+interface StateEvent {
+  event: string;
+  mousePosition: Vec2;
+  data: any;
+}
 
+function event(
+  e: string,
+  p: Vec2 = vec2(0, 0),
+  data: any | undefined = undefined
+): StateEvent {
+  return {
+    event: e,
+    mousePosition: p,
+    data: data || {}
+  };
+}
+
+class StateActions {
+  public static dispatch(event: StateEvent, state: State) {
     const events = {
-      ...EditorActions.events(mousePosition, state),
-      ...CurveActions.events(mousePosition, state),
+      ...EditorActions.events(event, state),
+      ...CurveActions.events(event, state),
 
       [StateActionKeys.DebugShowCurves]() {
         state.curves.curves.forEach(curve => {
@@ -42,15 +53,10 @@ export default class StateActions {
         });
       },
 
-      [StateActionKeys.Play6FPS]: playback(6),
-      [StateActionKeys.Play12FPS]: playback(12),
-      [StateActionKeys.Play24FPS]: playback(24),
-      [StateActionKeys.Play30FPS]: playback(30),
-      [StateActionKeys.Play60FPS]: playback(60),
-      [StateActionKeys.Play90FPS]: playback(90),
-      [StateActionKeys.Play120FPS]: playback(120),
-      [StateActionKeys.Play144FPS]: playback(144),
-      [StateActionKeys.Play240FPS]: playback(240),
+      [StateActionKeys.PlayAtFPS]() {
+        state.previousPlaybackFPS = event.data.fps;
+        state.playbackFPS = event.data.fps;
+      },
 
       [StateActionKeys.PlayOrPause]() {
         if (state.playbackFPS !== 0) {
@@ -62,12 +68,14 @@ export default class StateActions {
     };
 
     // @ts-ignore
-    const selected = events[event];
+    const selected = events[event.event];
     if (selected) {
-      console.log(`dispatch action=${event}`);
+      console.log(`dispatch action=${event.event}`);
       selected();
     } else {
-      console.log(`not handled action=${event}`);
+      console.log(`not handled action=${event.event}`);
     }
   }
 }
+
+export { StateActions, StateActionKeys, StateEvent, event };

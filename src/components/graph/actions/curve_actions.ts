@@ -1,12 +1,13 @@
 import State from "../state";
 import { StateActionKeys } from "./action_keys";
-import { Vec2, vec2 } from "@graph/shared/math";
+import { StateEvent } from ".";
+import { vec2 } from "@graph/shared/math";
 import { assert } from "../util/assert";
 import { SelectedPoint } from "../state/curves";
 import { ControlPointType } from "@graph/shared/curves";
 
-export default class CurveActions {
-  public static events(mousePosition: Vec2, state: State) {
+export class CurveActions {
+  public static events(e: StateEvent, state: State) {
     return {
       [StateActionKeys.InsertKeyframeAllCurves]() {
         state.pushUndoState();
@@ -76,7 +77,6 @@ export default class CurveActions {
         assert(selectedPoint);
         assert(selectedPoint!.point);
 
-        const point = selectedPoint!.point!;
         state.curves.modifyPoint(
           state.selected,
           state.grid.guidePoint,
@@ -98,7 +98,7 @@ export default class CurveActions {
       },
 
       [StateActionKeys.SelectPoint]() {
-        const point = state.grid.unproject(mousePosition);
+        const point = state.grid.unproject(e.mousePosition);
         const newSelection = state.curves.trySelectPoint(point);
 
         state.selected.selectPoint(newSelection);
