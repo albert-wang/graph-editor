@@ -457,15 +457,23 @@ export default class Curves {
   }
 
   public maximumFrame(): number {
+    if (this.curves.length === 0) {
+      return 0;
+    }
+
     return this.curves.reduce((v, c) => {
       return Math.max(v, c.maximumFrame());
-    }, 0);
+    }, this.curves[0].maximumFrame());
   }
 
   public minimumFrame(): number {
+    if (this.curves.length === 0) {
+      return 0;
+    }
+
     return this.curves.reduce((v, c) => {
       return Math.min(v, c.minimumFrame());
-    }, 0);
+    }, this.curves[0].minimumFrame());
   }
 
   private sortCurve(curve: Curve) {

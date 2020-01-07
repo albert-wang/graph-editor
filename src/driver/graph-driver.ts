@@ -3,6 +3,21 @@ import { vec2 } from "../shared/math";
 
 type FrameCallback = (p: Player) => void;
 
+interface NormalizeParameters {
+  domain?: number[];
+  range?: number[];
+}
+
+interface AnimeJSNormalizeParameters {
+  valueMultiplier?: number;
+  animationInstance?: any;
+}
+
+const standardNormalizeParameters: NormalizeParameters = {
+  domain: [0, 1],
+  range: [0, 1]
+};
+
 export class Player {
   public static LoopForever: number = -1;
   public onframe: FrameCallback[];
@@ -99,6 +114,133 @@ export class Player {
     });
   }
 
+  // Fairly specific library transformation function.
+  public animejsProperty(
+    name: string,
+    normalizeParams: AnimeJSNormalizeParameters = {},
+    additional: any = {}
+  ) {
+    const curve = this.sourceAnimation.curve(name);
+    if (!curve) {
+      console.log("No curve ", name);
+      return {};
+    }
+
+    const value = [0, 1];
+    if (normalizeParams.valueMultiplier) {
+      value[1] = normalizeParams.valueMultiplier;
+    }
+
+    const easing = () => {
+      const tweenFunction = this.normalized(name, { domain: [0, 1] });
+      const val = (t: number) => {
+        let delay = 0;
+        if (
+          normalizeParams.animationInstance &&
+          this.sourceAnimation.overridenFrame()
+        ) {
+          const anime = normalizeParams.animationInstance;
+          anime.running.forEach((instance: any) => {
+            instance.animations.forEach((a: any) => {
+              a.tweens.forEach((t: any) => {
+                if (t.easing === val) {
+                  delay = t.delay;
+                }
+              });
+            });
+          });
+        }
+
+        return tweenFunction(t, delay / 1000);
+      };
+
+      return val;
+    };
+
+    const res = {
+      value: value,
+      duration:
+        ((curve.maximumFrame() - curve.minimumFrame()) / this.fps) * 1000,
+      easing: easing,
+      ...additional
+    };
+
+    return res;
+  }
+
+  // Returns a function that takes in a single number in the params' domain, and
+  // then outputs a number in the params' range, following the curve
+  // given as the prop.
+  // Both the range and the domain must either be two element arrays, representing
+  // the minimum and maximum value of the range, or empty, which then uses the
+  // original range or domain.
+  public normalized(
+    prop: string,
+    normalizeParams: NormalizeParameters = standardNormalizeParameters
+  ) {
+    return (t: number, delay: number = 0) => {
+      // Setup inputs
+      let inputDomain: number[] = normalizeParams.domain || [];
+      let inputRange: number[] = normalizeParams.range || [];
+
+      // We reevaluate the curve every time since it can change
+      // due to editor actions.
+      const curve = this.sourceAnimation.curve(prop);
+
+      // No such curve, return default values.
+      if (!curve) {
+        if (inputRange.length === 0) {
+          return 0;
+        }
+
+        return inputRange[0];
+      }
+
+      const min = curve.minimumValue();
+      const max = curve.maximumValue();
+
+      const minF = curve.minimumFrame();
+      const maxF = curve.maximumFrame();
+
+      let domain = inputDomain;
+      if (domain.length === 0) {
+        domain = [minF, maxF];
+      }
+
+      let range = inputRange;
+      if (range.length === 0) {
+        range = [min, max];
+      }
+
+      const domainDelta = domain[1] - domain[0];
+      let f = 0;
+      if (Math.abs(domainDelta) > 0.000001) {
+        f = minF + ((maxF - minF) * (t - domain[0])) / domainDelta;
+      }
+
+      const overrideFrame = this.sourceAnimation.overridenFrame();
+      if (overrideFrame) {
+        f = overrideFrame;
+
+        if (delay !== 0) {
+          f = Math.floor(f - delay * this.fps);
+          f = Math.min(f, maxF);
+          f = Math.max(f, minF);
+        }
+      }
+
+      const v = curve.evaluate(f);
+      const minMaxDelta = max - min;
+      if (Math.abs(minMaxDelta) < 0.000001) {
+        return range[0];
+      } else {
+        const res =
+          range[0] + ((v - min) / minMaxDelta) * (range[1] - range[0]);
+        return res;
+      }
+    };
+  }
+
   private trigger() {
     this.onframe.forEach(c => {
       c(this);
@@ -135,6 +277,18 @@ export class Animation {
     this.curves = c;
   }
 
+  public curve(name: string): Curve | undefined {
+    const nameP = (c: Curve) => {
+      return c.name === name;
+    };
+
+    if (this.editingChannel) {
+      return this.overrideCurves.find(nameP);
+    }
+
+    return this.curves.find(nameP);
+  }
+
   public player(): Player {
     return new Player(this);
   }
@@ -149,10 +303,8 @@ export class Animation {
 
     let output = {};
     curves.forEach(c => {
-      if (output.hasOwnProperty(c.name)) {
-        // @ts-ignore
-        output[c.name] = c.evaluate(f);
-      }
+      // @ts-ignore
+      output[c.name] = c.evaluate(f);
     });
 
     return output;
@@ -239,6 +391,13 @@ export class Animation {
     };
   }
 
+  public overridenFrame(): number | undefined {
+    if (this.editingChannel) {
+      return this.overrideFrame;
+    }
+    return undefined;
+  }
+
   public maximumFrame(): number {
     let curves = this.curves;
 
@@ -246,9 +405,13 @@ export class Animation {
       curves = this.overrideCurves;
     }
 
+    if (curves.length == 0) {
+      return 0;
+    }
+
     const maxframe = curves.reduce((m: number, c: Curve): number => {
       return Math.max(m, c.maximumFrame());
-    }, 0);
+    }, curves[0].maximumFrame());
 
     return maxframe;
   }
@@ -260,11 +423,51 @@ export class Animation {
       curves = this.overrideCurves;
     }
 
+    if (curves.length == 0) {
+      return 0;
+    }
+
     const minframe = curves.reduce((m: number, c: Curve): number => {
       return Math.min(m, c.minimumFrame());
-    }, 0);
+    }, curves[0].minimumFrame());
 
     return minframe;
+  }
+
+  public maximumValue() {
+    let curves = this.curves;
+
+    if (this.editingChannel) {
+      curves = this.overrideCurves;
+    }
+
+    if (curves.length === 0) {
+      return 0;
+    }
+
+    const minValue = curves.reduce((m: number, c: Curve): number => {
+      return Math.min(m, c.maximumValue());
+    }, curves[0].maximumValue());
+
+    return minValue;
+  }
+
+  public minimumValue() {
+    let curves = this.curves;
+
+    if (this.editingChannel) {
+      curves = this.overrideCurves;
+    }
+
+    if (curves.length === 0) {
+      return 0;
+    }
+
+    const minValue = curves.reduce((m: number, c: Curve): number => {
+      return Math.min(m, c.minimumValue());
+    }, curves[0].minimumValue());
+
+    return minValue;
   }
 }
 

@@ -118,11 +118,59 @@ export class Curve {
   }
 
   public minimumValue(): number {
-    return 0;
+    if (this.controlPoints.length === 0) {
+      return 0;
+    }
+
+    return this.controlPoints.reduce(
+      (m: number, cp: ControlPoint, i: number, arr: ControlPoint[]): number => {
+        const next = arr[i + 1];
+        if (!next) {
+          return Math.min(m, cp.position.y);
+        }
+
+        if (isLinear(cp.type)) {
+          return Math.min(cp.position.y, next.position.y);
+        } else if (isBeizer(cp.type)) {
+          const lut = this.getLUT(cp, next);
+          return lut.reduce((m: number, p: BezierJs.Point): number => {
+            return Math.min(m, p.y);
+          }, lut[0].y);
+        }
+
+        // Unknown type
+        return m;
+      },
+      this.controlPoints[0].position.y
+    );
   }
 
   public maximumValue(): number {
-    return 0;
+    if (this.controlPoints.length === 0) {
+      return 0;
+    }
+
+    return this.controlPoints.reduce(
+      (m: number, cp: ControlPoint, i: number, arr: ControlPoint[]): number => {
+        const next = arr[i + 1];
+        if (!next) {
+          return Math.max(m, cp.position.y);
+        }
+
+        if (isLinear(cp.type)) {
+          return Math.max(cp.position.y, next.position.y);
+        } else if (isBeizer(cp.type)) {
+          const lut = this.getLUT(cp, next);
+          lut.reduce((m: number, p: BezierJs.Point): number => {
+            return Math.max(m, p.y);
+          }, lut[0].y);
+        }
+
+        // Unknown type
+        return m;
+      },
+      this.controlPoints[0].position.y
+    );
   }
 
   public curveInformationAt(frame: number): CurveInformation {
@@ -206,23 +254,7 @@ export class Curve {
           return f.position.y;
         case ControlPointType.Beizer:
         case ControlPointType.BeizerContinuous: {
-          let lut = f.cachedLUT;
-          if (lut.length === 0) {
-            const b = new beizer(
-              f.position.x,
-              f.position.y,
-              f.forwardHandle.x,
-              f.forwardHandle.y,
-              n.backwardsHandle.x,
-              n.backwardsHandle.y,
-              n.position.x,
-              n.position.y
-            );
-
-            lut = b.getLUT(128);
-            f.cachedLUT = lut;
-          }
-
+          const lut = this.getLUT(f, n);
           const bounds = this.lutLookup(frame, lut);
           if (!bounds[0] && bounds[1]) {
             return bounds[1].y;
@@ -297,5 +329,26 @@ export class Curve {
     this.controlPoints.forEach(c => {
       c.cachedLUT = [];
     });
+  }
+
+  private getLUT(p: ControlPoint, n: ControlPoint) {
+    let lut = p.cachedLUT;
+    if (lut.length === 0) {
+      const b = new beizer(
+        p.position.x,
+        p.position.y,
+        p.forwardHandle.x,
+        p.forwardHandle.y,
+        n.backwardsHandle.x,
+        n.backwardsHandle.y,
+        n.position.x,
+        n.position.y
+      );
+
+      lut = b.getLUT(128);
+      p.cachedLUT = lut;
+    }
+
+    return lut;
   }
 }

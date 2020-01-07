@@ -1,15 +1,18 @@
 <template>
   <div>
     <div @click="edit">{{ X }}, {{ Y }}, {{ Z }}</div>
-    <div
-      class="box"
-      :style="{ top: `${Y * 100}px`, left: `${X * 100}px` }"
-    ></div>
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
   </div>
 </template>
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import GraphDriver, { Animation, Player } from "@/driver/graph-driver";
+import anime from "animejs";
 
 interface AnimationStruct {
   X: number;
@@ -20,7 +23,7 @@ interface AnimationStruct {
 @Component
 export default class App extends Vue {
   $refs!: {
-    canvas: HTMLCanvasElement;
+    box: HTMLDivElement;
   };
 
   animation: Animation;
@@ -55,6 +58,24 @@ export default class App extends Vue {
     });
   }
 
+  mounted() {
+    const normalizationParams = {
+      valueMultiplier: 100,
+      animationInstance: anime
+    };
+
+    anime({
+      targets: ".box",
+      translateX: this.player.animejsProperty("X", normalizationParams),
+      translateY: this.player.animejsProperty("Y", normalizationParams),
+      loop: 1000,
+      direction: "alternate",
+      delay: anime.stagger(200)
+    });
+
+    console.log(anime.running);
+  }
+
   edit() {
     this.animation.edit("/main.html");
   }
@@ -77,6 +98,6 @@ export default class App extends Vue {
   background-color: red;
   height: 10px;
   width: 10px;
-  position: absolute;
+  margin: 2px;
 }
 </style>
