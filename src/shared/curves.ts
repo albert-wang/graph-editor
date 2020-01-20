@@ -26,7 +26,7 @@ export class ControlPoint {
   public forwardHandle: Vec2;
   public backwardsHandle: Vec2;
 
-  cachedLUT: BezierJs.Point[];
+  cachedLUT: beizer.Point[];
 
   constructor(
     type: ControlPointType,
@@ -133,7 +133,7 @@ export class Curve {
           return Math.min(cp.position.y, next.position.y);
         } else if (isBeizer(cp.type)) {
           const lut = this.getLUT(cp, next);
-          return lut.reduce((m: number, p: BezierJs.Point): number => {
+          return lut.reduce((m: number, p: beizer.Point): number => {
             return Math.min(m, p.y);
           }, lut[0].y);
         }
@@ -161,7 +161,7 @@ export class Curve {
           return Math.max(cp.position.y, next.position.y);
         } else if (isBeizer(cp.type)) {
           const lut = this.getLUT(cp, next);
-          lut.reduce((m: number, p: BezierJs.Point): number => {
+          lut.reduce((m: number, p: beizer.Point): number => {
             return Math.max(m, p.y);
           }, lut[0].y);
         }
@@ -278,7 +278,7 @@ export class Curve {
   }
 
   // TODO: Merge implementations with controlPointsAtFrame
-  private lutLookup(frame: number, lut: BezierJs.Point[]) {
+  private lutLookup(frame: number, lut: beizer.Point[]) {
     if (frame < lut[0].x) {
       return [null, lut[0]];
     }

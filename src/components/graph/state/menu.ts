@@ -9,7 +9,7 @@ import {
 } from "@graph/shared/math";
 import KeyboardActions from "../actions/keyboard";
 import Sizes from "../rendering/sizes";
-import { ControlPointType } from "@/shared/curves";
+import { ControlPointType } from "@graph/shared/curves";
 
 export enum MenuOptionType {
   Default = 0,

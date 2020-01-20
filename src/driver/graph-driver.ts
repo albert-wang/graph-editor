@@ -41,7 +41,7 @@ export class Player {
     this.loopCount = n;
   }
 
-  public play(fps: number = 60) {
+  public play() {
     this.fps = 60;
 
     requestAnimationFrame(t => {
@@ -159,8 +159,7 @@ export class Player {
 
     const res = {
       value: value,
-      duration:
-        ((curve.maximumFrame() - curve.minimumFrame()) / this.fps) * 1000,
+      duration: ((curve.maximumFrame() - curve.minimumFrame()) / 60) * 1000,
       easing: easing,
       ...additional
     };
