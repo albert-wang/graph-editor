@@ -25,6 +25,8 @@ export class ControlPoint {
   public forwardHandle: Vec2;
   public backwardsHandle: Vec2;
 
+  // Very specifically this will be undefined at first so that it doesn't 
+  // get reactified by deep inspection
   cachedLUT: BezierJs.Point[] | undefined = undefined;
 
   constructor(
