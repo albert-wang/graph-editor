@@ -156,7 +156,12 @@ export default class State {
         vec2(this.grid.guidePoint.x + 1, this.grid.guidePoint.y)
       );
 
-      if (this.grid.guidePoint.x > this.curves.maximumFrame()) {
+      const repeatFrame =
+        typeof this.grid.repeatFrame === "undefined"
+          ? this.curves.maximumFrame()
+          : this.grid.repeatFrame;
+
+      if (this.grid.guidePoint.x > repeatFrame) {
         this.grid.guidePoint.x = this.curves.minimumFrame();
       }
     }

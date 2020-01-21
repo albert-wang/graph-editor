@@ -4,7 +4,7 @@ import { HorizontalRuler, VerticalRuler } from "./rendering/rulers";
 import GridRenderer from "./rendering/grid";
 import CurveRenderer from "./rendering/curve";
 
-import { vec2, Vec2 } from "../../shared/math";
+import { vec2, Vec2 } from "@graph/shared/math";
 import MouseActions from "./actions/mouse";
 
 import { DragEvent } from "./directives/middle-drag";

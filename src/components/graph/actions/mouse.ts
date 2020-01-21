@@ -1,5 +1,5 @@
 import State from "../state";
-import { Vec2, vec2, mul } from "../../../shared/math";
+import { Vec2, vec2, mul } from "@graph/shared/math";
 
 import { DragEvent } from "../directives/middle-drag";
 import sizes from "../rendering/sizes";

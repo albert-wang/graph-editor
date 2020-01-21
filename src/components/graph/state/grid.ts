@@ -12,6 +12,11 @@ export default class GridState {
   // The guide point is the point that the guides are drawn at
   public guidePoint: Vec2;
 
+  // The repeat frame is the frame at which the animation will reset
+  // to zero from. Generally the same as guidePoint.x, until specifically
+  // set differently.
+  public repeatFrame: number | undefined;
+
   private parent: State;
 
   constructor(parent: State, position: Vec2) {

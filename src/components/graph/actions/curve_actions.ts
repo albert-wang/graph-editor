@@ -22,11 +22,11 @@ export class CurveActions {
       },
 
       [StateActionKeys.InsertKeyframe]() {
-        state.pushUndoState();
         if (!state.selected.curve) {
           return;
         }
 
+        state.pushUndoState();
         const insertedPoint = state.curves.addPoint(
           state.selected.curve,
           state.grid.guidePoint.x
@@ -37,6 +37,27 @@ export class CurveActions {
         point.point = insertedPoint;
 
         state.selected = point;
+      },
+
+      [StateActionKeys.DeleteControlPoint]() {
+        if (!state.selected.curve || !state.selected.point) {
+          return;
+        }
+
+        if (state.selected.curve.controlPoints.length <= 2) {
+          return;
+        }
+
+        state.pushUndoState();
+
+        const idx = state.selected.curve.controlPoints.indexOf(
+          state.selected.point
+        );
+        state.selected.curve.controlPoints.splice(idx, 1);
+        state.selected.curve.invalidateLUTs();
+
+        let prevIdx = Math.max(idx - 1, 0);
+        state.selected.point = state.selected.curve.controlPoints[prevIdx];
       },
 
       [StateActionKeys.ChangeInterpolationType]() {

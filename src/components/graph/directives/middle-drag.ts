@@ -1,4 +1,4 @@
-import { Vec2, vec2 } from "../../../shared/math";
+import { Vec2, vec2 } from "@graph/shared/math";
 
 export interface DragEvent {
   // Pixel values

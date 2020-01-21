@@ -258,19 +258,31 @@ export default class Menu {
         )
       ]),
       this.spacer(),
-      this.simpleOption(
-        "Frame Guide to Selected",
-        event(StateActionKeys.SetGuideFrameToSelectedPointFrame),
-        hasSelectedPoint
-      ),
-      this.simpleOption(
-        "Move Frame Guide",
-        event(StateActionKeys.SetGuideFrame)
-      ),
-      this.simpleOption(
-        "Move Value Guide",
-        event(StateActionKeys.SetGuideValue)
-      ),
+      this.simpleOption("Guides", noop, true, [
+        this.header("Guides"),
+        this.spacer(),
+        this.simpleOption(
+          "Frame Guide to Selected",
+          event(StateActionKeys.SetGuideFrameToSelectedPointFrame),
+          hasSelectedPoint
+        ),
+        this.simpleOption(
+          "Move Frame Guide",
+          event(StateActionKeys.SetGuideFrame)
+        ),
+        this.simpleOption(
+          "Move Value Guide",
+          event(StateActionKeys.SetGuideValue)
+        ),
+        this.simpleOption(
+          "Set Repeat Frame",
+          event(StateActionKeys.EditRepeatFrame)
+        ),
+        this.simpleOption(
+          "Clear Repeat Frame",
+          event(StateActionKeys.ClearRepeatFrame)
+        )
+      ]),
       this.spacer(),
       this.simpleOption("Interpolation", noop, hasSelectedPoint, [
         this.header("Interpolation"),

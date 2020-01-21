@@ -1,6 +1,6 @@
 import State from "../state";
 import Colors from "./colors";
-import { vec2, Vec2, add, pointInBox } from "../../../shared/math";
+import { vec2, Vec2, add, pointInBox } from "@graph/shared/math";
 
 import Menu, { MenuOptionType, MenuOption } from "../state/menu";
 

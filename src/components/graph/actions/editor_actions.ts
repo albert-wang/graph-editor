@@ -141,6 +141,15 @@ export class EditorActions {
 
       [StateActionKeys.MoveScreen]() {
         state.grid.pixelMove(vec2(-e.mousePosition.x, e.mousePosition.y));
+      },
+
+      [StateActionKeys.ClearRepeatFrame]() {
+        state.grid.repeatFrame = undefined;
+      },
+
+      [StateActionKeys.EditRepeatFrame]() {
+        state.grid.repeatFrame = state.grid.guidePoint.x;
+        console.log(state.grid.repeatFrame);
       }
     };
   }

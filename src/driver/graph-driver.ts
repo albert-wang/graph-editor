@@ -161,17 +161,19 @@ export class Player {
 
               // Setup the new complete callback
               info.instance.complete = () => {
-                if (this.underlyingAnimationIsBeingEdited()) {
-                  // Restart if the animation is being edited.
-                  info.instance.restart();
-                } else {
-                  // Otherwise, invoke the original callback.
-                  if (info.instance.__original_complete_callback) {
-                    info.instance.complete =
-                      info.instance.__original_complete_callback;
-                    info.instance.__original_complete_callback(info.instance);
+                requestAnimationFrame(() => {
+                  if (this.underlyingAnimationIsBeingEdited()) {
+                    // Restart if the animation is being edited.
+                    info.instance.restart();
+                  } else {
+                    // Otherwise, invoke the original callback.
+                    if (info.instance.__original_complete_callback) {
+                      info.instance.complete =
+                        info.instance.__original_complete_callback;
+                      info.instance.__original_complete_callback(info.instance);
+                    }
                   }
-                }
+                });
               };
             }
           }

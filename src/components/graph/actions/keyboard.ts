@@ -1,15 +1,16 @@
-import { StateActions, StateActionKeys, event } from ".";
+import { StateActions, StateActionKeys, event, StateEvent } from ".";
 import State from "../state";
-import { Vec2, vec2 } from "../../../shared/math";
+import { Vec2, vec2 } from "@graph/shared/math";
 
 export default class KeyboardActions {
-  public static shortcuts: Object = {
+  public static shortcuts: Record<string, StateEvent> = {
     ["ctrl+z"]: event(StateActionKeys.Undo),
     ["ctrl+y"]: event(StateActionKeys.Redo),
     ["ctrl+c"]: event(StateActionKeys.Copy),
     ["ctrl+Spc"]: event(StateActionKeys.SetGuideFrame),
     ["shift+Spc"]: event(StateActionKeys.SetGuideValue),
     ["s"]: event(StateActionKeys.SetGuideFrameToSelectedPointFrame),
+    ["Backspace"]: event(StateActionKeys.DeleteControlPoint),
 
     ["ctrl+i"]: event(StateActionKeys.InsertKeyframeAllCurves),
     ["i"]: event(StateActionKeys.InsertKeyframe),
@@ -43,14 +44,15 @@ export default class KeyboardActions {
       key = `alt+${key}`;
     }
 
-    // @ts-ignore
     const action = KeyboardActions.shortcuts[key];
-    action.mousePosition = p;
+    if (action) {
+      action.mousePosition = p;
+    }
 
     console.log(
       `received key='${e.key}' ctrl=${e.ctrlKey} alt=${e.altKey} shift=${
         e.shiftKey
-      } derived=${key} action=${action ? action.key || action : "none"}`
+      } derived=${key} action=${action ? action.event || action : "none"}`
     );
 
     if (action) {

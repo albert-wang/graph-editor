@@ -1,5 +1,6 @@
 import State from "../state";
 import Colors from "./colors";
+import { vec2 } from "@graph/shared/math";
 
 class HorizontalRulerRenderer {
   public static render(state: State) {
@@ -31,20 +32,31 @@ class HorizontalRulerRenderer {
       label += interval;
     }
 
-    // Render the ruler.
-    const location = state.grid.project(state.grid.guidePoint);
-    ctx.strokeStyle = Colors.GuideLine;
+    // Render the repeat ruler.
+    if (typeof state.grid.repeatFrame != "undefined") {
+      this.renderGuideLine(state, state.grid.repeatFrame, Colors.RepeatLine);
+    }
+
+    this.renderGuideLine(state, state.grid.guidePoint.x, Colors.GuideLine);
+  }
+
+  private static renderGuideLine(state: State, value: number, color: string) {
+    const ctx = state.ctx;
+
+    const location = state.grid.project(vec2(value, 0));
+
+    ctx.strokeStyle = color;
     ctx.beginPath();
     ctx.moveTo(Math.round(location.x) + 0.5, 30);
     ctx.lineTo(Math.round(location.x) + 0.5, state.bounds.y);
     ctx.stroke();
 
-    const txt = `${state.grid.guidePoint.x}`;
+    const txt = `${Math.round(value)}`;
     const metrics = ctx.measureText(txt);
     const width = Math.max(metrics.width + 8, 20);
     const padding = (width - metrics.width) / 2;
 
-    ctx.fillStyle = Colors.GuideLine;
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.rect(location.x - metrics.width / 2 - padding, 0, width, 30);
     ctx.fill();

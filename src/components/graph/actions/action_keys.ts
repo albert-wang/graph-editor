@@ -13,6 +13,7 @@ enum StateActionKeys {
   // Curve manipulation
   InsertKeyframe = "insert-keyframe",
   InsertKeyframeAllCurves = "insert-keyframe-all-curves",
+  DeleteControlPoint = "delete-control-point",
   SetGuideFrame = "set-guide-frame",
   SetGuideFrameToSelectedPointFrame = "set-guide-frame-to-selected-point-frame",
   SetGuideValue = "set-guide-value",
@@ -33,6 +34,8 @@ enum StateActionKeys {
   EditValue = "edit-value",
   EditPointValue = "edit-point-value",
   EditPointFrame = "edit-point-frame",
+  EditRepeatFrame = "edit-repeat-frame",
+  ClearRepeatFrame = "clear-repeat-frame",
   SubmitEdit = "submit-edit",
 
   // Playback
