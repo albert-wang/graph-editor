@@ -60,8 +60,7 @@ export default class Menu {
     const keys = KeyboardActions.shortcuts;
     let shortcut = "";
     Object.keys(keys).forEach(v => {
-      // @ts-ignore
-      if (keys[v] === action) {
+      if (keys[v].event === action.event) {
         shortcut = v;
       }
     });
