@@ -408,6 +408,7 @@ export class Animation {
             this.overrideCurves = e.data.curves.map((c: any) => {
               return Curve.fromJSON(c);
             });
+
             break;
           }
           case "close": {

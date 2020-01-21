@@ -25,7 +25,7 @@ export class ControlPoint {
   public forwardHandle: Vec2;
   public backwardsHandle: Vec2;
 
-  // Very specifically this will be undefined at first so that it doesn't 
+  // Very specifically this will be undefined at first so that it doesn't
   // get reactified by deep inspection
   cachedLUT: BezierJs.Point[] | undefined = undefined;
 
@@ -133,9 +133,11 @@ export class Curve {
           return Math.min(cp.position.y, next.position.y);
         } else if (isBeizer(cp.type)) {
           const lut = this.getLUT(cp, next);
-          return lut.reduce((m: number, p: BezierJs.Point): number => {
+          const minLut = lut.reduce((m: number, p: BezierJs.Point): number => {
             return Math.min(m, p.y);
           }, lut[0].y);
+
+          return Math.min(minLut, m);
         }
 
         // Unknown type
@@ -161,9 +163,11 @@ export class Curve {
           return Math.max(cp.position.y, next.position.y);
         } else if (isBeizer(cp.type)) {
           const lut = this.getLUT(cp, next);
-          lut.reduce((m: number, p: BezierJs.Point): number => {
+          const maxLut = lut.reduce((m: number, p: BezierJs.Point): number => {
             return Math.max(m, p.y);
           }, lut[0].y);
+
+          return Math.max(maxLut, m);
         }
 
         // Unknown type

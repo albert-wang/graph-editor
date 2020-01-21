@@ -480,5 +480,7 @@ export default class Curves {
     curve.controlPoints.sort((a, b) => {
       return a.position.x - b.position.x;
     });
+
+    curve.invalidateLUTs();
   }
 }
