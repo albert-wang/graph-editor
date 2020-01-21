@@ -1,6 +1,6 @@
 import { Vec2 } from "./math";
 import beizer from "bezier-js";
-import { exhaustive } from "@/components/graph/util/exhaustive";
+import { exhaustive } from "@graph/components/graph/util/exhaustive";
 
 export enum ControlPointType {
   Linear = 0,
