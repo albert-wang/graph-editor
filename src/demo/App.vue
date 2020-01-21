@@ -1,6 +1,7 @@
 <template>
   <div>
     <div @click="edit">Edit</div>
+    <div @click="play">Play</div>
     <div class="box"></div>
     <div class="box"></div>
     <div class="box"></div>
@@ -49,6 +50,10 @@ export default class App extends Vue {
   }
 
   mounted() {
+    this.play();
+  }
+
+  play() {
     const normalizationParams = {
       valueMultiplier: 100,
       animationInstance: anime
