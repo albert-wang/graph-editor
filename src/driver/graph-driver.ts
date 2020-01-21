@@ -1,6 +1,8 @@
 import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
 import { vec2 } from "../shared/math";
 
+import { getInstanceAnimationAndTween } from "./anime-integration";
+
 type FrameCallback = (p: Player) => void;
 
 interface NormalizeParameters {
@@ -17,6 +19,8 @@ const standardNormalizeParameters: NormalizeParameters = {
   domain: [0, 1],
   range: [0, 1]
 };
+
+const PlaybackFPS = 60;
 
 export class Player {
   public static LoopForever: number = -1;
@@ -42,7 +46,7 @@ export class Player {
   }
 
   public play() {
-    this.fps = 60;
+    this.fps = PlaybackFPS;
 
     requestAnimationFrame(t => {
       this.updateWithAnimationFrame(t);
@@ -114,6 +118,10 @@ export class Player {
     });
   }
 
+  public underlyingAnimationIsBeingEdited() {
+    return typeof this.sourceAnimation.overridenFrame() !== "undefined";
+  }
+
   // Fairly specific library transformation function.
   public animejsProperty(
     name: string,
@@ -137,18 +145,36 @@ export class Player {
         let delay = 0;
         if (
           normalizeParams.animationInstance &&
-          this.sourceAnimation.overridenFrame()
+          this.underlyingAnimationIsBeingEdited()
         ) {
           const anime = normalizeParams.animationInstance;
-          anime.running.forEach((instance: any) => {
-            instance.animations.forEach((a: any) => {
-              a.tweens.forEach((t: any) => {
-                if (t.easing === val) {
-                  delay = t.delay;
+          const info = getInstanceAnimationAndTween(anime, val);
+          if (info) {
+            // Extract the delay
+            delay = info.tween.delay;
+
+            // Setup the restart looper iff we haven't done it before
+            if (!info.instance.__original_complete_callback) {
+              // Save the old complete callback
+              info.instance.__original_complete_callback =
+                info.instance.complete;
+
+              // Setup the new complete callback
+              info.instance.complete = () => {
+                if (this.underlyingAnimationIsBeingEdited()) {
+                  // Restart if the animation is being edited.
+                  info.instance.restart();
+                } else {
+                  // Otherwise, invoke the original callback.
+                  if (info.instance.__original_complete_callback) {
+                    info.instance.complete =
+                      info.instance.__original_complete_callback;
+                    info.instance.__original_complete_callback(info.instance);
+                  }
                 }
-              });
-            });
-          });
+              };
+            }
+          }
         }
 
         return tweenFunction(t, delay / 1000);
@@ -159,7 +185,8 @@ export class Player {
 
     const res = {
       value: value,
-      duration: ((curve.maximumFrame() - curve.minimumFrame()) / 60) * 1000,
+      duration:
+        ((curve.maximumFrame() - curve.minimumFrame()) / PlaybackFPS) * 1000,
       easing: easing,
       ...additional
     };
@@ -222,7 +249,7 @@ export class Player {
         f = overrideFrame;
 
         if (delay !== 0) {
-          f = Math.floor(f - delay * this.fps);
+          f = Math.floor(f - delay * PlaybackFPS);
           f = Math.min(f, maxF);
           f = Math.max(f, minF);
         }
@@ -350,15 +377,22 @@ export class Animation {
       return;
     }
 
-    let parsedStatus = { editing: false };
     try {
+      let parsedStatus = { editing: false, curves: [] };
       parsedStatus = JSON.parse(status);
+      if (!parsedStatus.editing) {
+        return false;
+      }
+
+      this.overrideCurves = parsedStatus.curves.map((c: any) => {
+        return Curve.fromJSON(c);
+      });
+
+      return true;
     } catch (e) {
       console.error(e);
-      return;
+      return false;
     }
-
-    return parsedStatus.editing;
   }
 
   public setupEditingChannel() {

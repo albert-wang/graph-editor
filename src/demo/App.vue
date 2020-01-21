@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div @click="edit">{{ X }}, {{ Y }}, {{ Z }}</div>
+    <div @click="edit">Edit</div>
     <div class="box"></div>
     <div class="box"></div>
     <div class="box"></div>
@@ -29,12 +29,6 @@ export default class App extends Vue {
   animation: Animation;
   player: Player;
 
-  values: AnimationStruct = {
-    X: 0,
-    Y: 0,
-    Z: 0
-  };
-
   constructor() {
     super();
 
@@ -51,11 +45,7 @@ export default class App extends Vue {
     );
 
     this.player = this.animation.player();
-    this.player.loop(Player.LoopForever);
-    this.player.play();
-    this.player.on("frame", (curve: Player) => {
-      curve.evaluate(this.values);
-    });
+    window.anime = anime;
   }
 
   mounted() {
@@ -68,28 +58,13 @@ export default class App extends Vue {
       targets: ".box",
       translateX: this.player.animejsProperty("X", normalizationParams),
       translateY: this.player.animejsProperty("Y", normalizationParams),
-      loop: 1000,
       direction: "alternate",
       delay: anime.stagger(200)
     });
-
-    console.log(anime.running);
   }
 
   edit() {
     this.animation.edit("/main.html");
-  }
-
-  public get X() {
-    return this.values.X;
-  }
-
-  public get Y() {
-    return this.values.Y;
-  }
-
-  public get Z() {
-    return this.values.Z;
   }
 }
 </script>

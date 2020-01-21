@@ -1,7 +1,6 @@
 import { Vec2 } from "./math";
-
-// @ts-ignore
 import beizer from "bezier-js";
+import { exhaustive } from "@/components/graph/util/exhaustive";
 
 export enum ControlPointType {
   Linear = 0,
@@ -26,7 +25,7 @@ export class ControlPoint {
   public forwardHandle: Vec2;
   public backwardsHandle: Vec2;
 
-  cachedLUT: beizer.Point[];
+  cachedLUT: BezierJs.Point[] | undefined = undefined;
 
   constructor(
     type: ControlPointType,
@@ -38,7 +37,6 @@ export class ControlPoint {
     this.position = position;
     this.forwardHandle = forward;
     this.backwardsHandle = backward;
-    this.cachedLUT = [];
   }
 
   toJSON() {
@@ -133,7 +131,7 @@ export class Curve {
           return Math.min(cp.position.y, next.position.y);
         } else if (isBeizer(cp.type)) {
           const lut = this.getLUT(cp, next);
-          return lut.reduce((m: number, p: beizer.Point): number => {
+          return lut.reduce((m: number, p: BezierJs.Point): number => {
             return Math.min(m, p.y);
           }, lut[0].y);
         }
@@ -161,7 +159,7 @@ export class Curve {
           return Math.max(cp.position.y, next.position.y);
         } else if (isBeizer(cp.type)) {
           const lut = this.getLUT(cp, next);
-          lut.reduce((m: number, p: beizer.Point): number => {
+          lut.reduce((m: number, p: BezierJs.Point): number => {
             return Math.max(m, p.y);
           }, lut[0].y);
         }
@@ -271,14 +269,14 @@ export class Curve {
           }
         }
         default:
-          console.error(`Unknown curve type: ${ControlPointType[f.type]}`);
-          return f.position.y;
+          exhaustive(f.type);
+          return 0;
       }
     }
   }
 
   // TODO: Merge implementations with controlPointsAtFrame
-  private lutLookup(frame: number, lut: beizer.Point[]) {
+  private lutLookup(frame: number, lut: BezierJs.Point[]) {
     if (frame < lut[0].x) {
       return [null, lut[0]];
     }
@@ -327,13 +325,13 @@ export class Curve {
 
   public invalidateLUTs() {
     this.controlPoints.forEach(c => {
-      c.cachedLUT = [];
+      c.cachedLUT = undefined;
     });
   }
 
   private getLUT(p: ControlPoint, n: ControlPoint) {
     let lut = p.cachedLUT;
-    if (lut.length === 0) {
+    if (!lut || lut.length === 0) {
       const b = new beizer(
         p.position.x,
         p.position.y,
