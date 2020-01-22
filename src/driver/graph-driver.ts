@@ -236,9 +236,6 @@ export class Player {
       }
 
       let range = inputRange;
-      if (range.length === 0) {
-        range = [min, max];
-      }
 
       const domainDelta = domain[1] - domain[0];
       let f = 0;
@@ -260,10 +257,19 @@ export class Player {
       const v = curve.evaluate(f);
       const minMaxDelta = max - min;
       if (Math.abs(minMaxDelta) < 0.000001) {
+        if (range.length == 0) {
+          return min;
+        }
+
         return range[0];
       } else {
+        if (range.length == 0) {
+          return v;
+        }
+
         const res =
           range[0] + ((v - min) / minMaxDelta) * (range[1] - range[0]);
+
         return res;
       }
     };
@@ -303,6 +309,38 @@ export class Animation {
 
   public setCurves(c: Curve[]) {
     this.curves = c;
+  }
+
+  public addSingleCurve(name: string) {
+    const curve = new Curve(name);
+    let minF = this.minimumFrame();
+    let maxF = this.maximumFrame();
+
+    if (minF == 0 && maxF == 0) {
+      minF = 1;
+      maxF = 60;
+    }
+
+    const start = new ControlPoint(
+      ControlPointType.Beizer,
+      vec2(minF, 0),
+      vec2(minF + 10, 0),
+      vec2(minF - 10, 0)
+    );
+
+    const end = new ControlPoint(
+      ControlPointType.Beizer,
+      vec2(maxF, 1),
+      vec2(maxF + 10, 1),
+      vec2(maxF - 10, 1)
+    );
+
+    curve.controlPoints.push(start);
+    curve.controlPoints.push(end);
+
+    curve.invalidateLUTs();
+    this.curves.push(curve);
+    return curve;
   }
 
   public curve(name: string): Curve | undefined {
