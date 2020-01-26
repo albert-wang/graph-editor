@@ -3,7 +3,12 @@ import { StateActionKeys } from "./action_keys";
 import { StateEvent } from ".";
 import { vec2, sub, mul, add } from "@graph/shared/math";
 import { SelectedPoint } from "../state/curves";
-import { ControlPointType, isBeizer } from "@graph/shared/curves";
+import {
+  ControlPointType,
+  isBeizer,
+  Curve,
+  ControlPoint
+} from "@graph/shared/curves";
 
 export class CurveActions {
   public static events(e: StateEvent, state: State) {
@@ -14,57 +19,81 @@ export class CurveActions {
         const point = new SelectedPoint();
 
         state.curves.curves.forEach(c => {
-          point.point = state.curves.addPoint(c, state.grid.guidePoint.x);
-          point.curve = c;
+          point.curve.push(c);
+          point.point.push(state.curves.addPoint(c, state.grid.guidePoint.x));
         });
 
         state.selected = point;
       },
 
       [StateActionKeys.InsertKeyframe]() {
-        if (!state.selected.curve) {
+        if (!state.selected.hasAnyCurves()) {
           return;
         }
 
         state.pushUndoState();
-        const insertedPoint = state.curves.addPoint(
-          state.selected.curve,
-          state.grid.guidePoint.x
-        );
 
-        const point = new SelectedPoint();
-        point.curve = state.selected.curve;
-        point.point = insertedPoint;
+        const newSelection = new SelectedPoint();
+        state.selected.foreach((curve: Curve) => {
+          const insertedPoint = state.curves.addPoint(
+            curve,
+            state.grid.guidePoint.x
+          );
+          newSelection.curve.push(curve);
+          newSelection.point.push(insertedPoint);
+        });
 
-        state.selected = point;
+        state.selected = newSelection;
       },
 
       [StateActionKeys.DeleteControlPoint]() {
-        if (!state.selected.curve || !state.selected.point) {
-          return;
-        }
-
-        if (state.selected.curve.controlPoints.length <= 2) {
+        const selected = state.selected;
+        if (!selected.hasAnyCurves()) {
           return;
         }
 
         state.pushUndoState();
+        let modified = false;
+        const newSelection = new SelectedPoint();
 
-        const idx = state.selected.curve.controlPoints.indexOf(
-          state.selected.point
-        );
-        state.selected.curve.controlPoints.splice(idx, 1);
-        state.selected.curve.invalidateLUTs();
+        selected.foreach((curve: Curve, point: ControlPoint | null) => {
+          if (curve.controlPoints.length <= 2 || !point) {
+            return;
+          }
 
-        let prevIdx = Math.max(idx - 1, 0);
-        state.selected.point = state.selected.curve.controlPoints[prevIdx];
+          modified = true;
+
+          const idx = curve.controlPoints.indexOf(point);
+          curve.controlPoints.splice(idx, 1);
+          curve.invalidateLUTs();
+
+          let prevIdx = Math.max(idx - 1, 0);
+          newSelection.curve.push(curve);
+          newSelection.point.push(curve.controlPoints[prevIdx]);
+        });
+
+        if (!modified) {
+          state.deleteUndoState();
+        }
+
+        state.selected = newSelection;
       },
 
       [StateActionKeys.ChangeInterpolationType]() {
         state.pushUndoState();
 
-        const selectedPoint = state.selected;
-        selectedPoint!.point!.type = e.data.type as ControlPointType;
+        let modified = false;
+        state.selected.foreach((curve: Curve, point: ControlPoint | null) => {
+          if (point) {
+            point.type = e.data.type as ControlPointType;
+            curve.invalidateLUTs();
+            modified = true;
+          }
+        });
+
+        if (!modified) {
+          state.deleteUndoState();
+        }
       },
 
       [StateActionKeys.UseFixedControlPoints]() {
@@ -73,37 +102,50 @@ export class CurveActions {
 
         // Get the next point after this one, since we have to modify its backwards handle too.
         const selected = state.selected;
-        if (!selected || !selected.point || !selected.curve) {
-          return;
-        }
-
-        const info = selected.curve.curveInformationAt(
-          selected.point.position.x
-        );
-        if (!info.points[1]) {
-          return;
-        }
-
-        const current = selected.point;
-        const next = info.points[1];
-
-        if (!isBeizer(current.type)) {
+        if (!selected) {
           return;
         }
 
         state.pushUndoState();
-        const distance = sub(next.position, current.position);
-        const cp1 = add(
-          current.position,
-          mul(vec2(first[0], first[1]), distance)
-        );
-        const cp2 = add(
-          current.position,
-          mul(vec2(second[0], second[1]), distance)
-        );
+        let modified = false;
 
-        current.forwardHandle = cp1;
-        next.backwardsHandle = cp2;
+        selected.foreach((curve: Curve, point: ControlPoint | null) => {
+          if (!point) {
+            return;
+          }
+
+          const info = curve.curveInformationAt(point.position.x);
+          if (!info.points[1]) {
+            return;
+          }
+
+          const current = point;
+          const next = info.points[1];
+
+          if (!isBeizer(current.type)) {
+            return;
+          }
+
+          const distance = sub(next.position, current.position);
+          const cp1 = add(
+            current.position,
+            mul(vec2(first[0], first[1]), distance)
+          );
+          const cp2 = add(
+            current.position,
+            mul(vec2(second[0], second[1]), distance)
+          );
+
+          current.forwardHandle = cp1;
+          next.backwardsHandle = cp2;
+
+          curve.invalidateLUTs();
+          modified = true;
+        });
+
+        if (!modified) {
+          state.deleteUndoState();
+        }
       },
 
       [StateActionKeys.ContinuousHandles]() {},
@@ -129,21 +171,43 @@ export class CurveActions {
       },
       [StateActionKeys.ToggleVisible]() {
         state.pushUndoState();
-        if (state.selected.curve) {
-          state.selected.curve.visible = !state.selected.curve.visible;
+        let modified = false;
+
+        state.selected.foreach((c: Curve) => {
+          c.visible = !c.visible;
+          modified = true;
+        });
+
+        if (!modified) {
+          state.deleteUndoState();
         }
       },
 
       [StateActionKeys.ToggleLocked]() {
         state.pushUndoState();
-        if (state.selected.curve) {
-          state.selected.curve.locked = !state.selected.curve.locked;
+        let modified = false;
+
+        state.selected.foreach((c: Curve) => {
+          c.locked = !c.locked;
+          modified = true;
+        });
+
+        if (!modified) {
+          state.deleteUndoState();
         }
       },
 
       [StateActionKeys.SelectPoint]() {
         const point = state.grid.unproject(e.mousePosition);
         const newSelection = state.curves.trySelectPoint(point);
+
+        // If the select point was part of a multiselect, don't change the selection
+        if (newSelection.isSinglePoint() && state.selected.curve.length > 1) {
+          if (state.selected.hasPoint(newSelection.point[0]!)) {
+            state.selected.handle = newSelection.handle;
+            return;
+          }
+        }
 
         state.selected.selectPoint(newSelection);
       }

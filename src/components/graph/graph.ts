@@ -12,6 +12,7 @@ import MenuRenderer from "./rendering/menu";
 import KeyboardActions from "./actions/keyboard";
 import CurvePropertiesRenderer from "./rendering/curve_properties";
 import { Curve } from "@graph/shared/curves";
+import BoxRenderer from "./rendering/box";
 
 class Graph {
   private state: State;
@@ -23,11 +24,13 @@ class Graph {
   constructor(
     ctx: CanvasRenderingContext2D,
     canvas: HTMLCanvasElement,
-    bounds: ClientRect | DOMRect
+    bounds: ClientRect | DOMRect,
+    inputField: HTMLInputElement
   ) {
     this.state = new State({
       ctx: ctx,
       canvas: canvas,
+      inputField: inputField,
       bounds: vec2(bounds.width, bounds.height),
       grid: {
         area: {
@@ -50,6 +53,13 @@ class Graph {
 
     // Load the curves.
     this.loadAnimation();
+
+    // Setup focus
+    this.state.canvas.focus();
+  }
+
+  public submitInput() {
+    this.state.submitInput();
   }
 
   // Input handling.
@@ -110,8 +120,6 @@ class Graph {
 
     this.state.curves.curves = [];
     res.curves.map((c, i) => {
-      console.log(c);
-      console.log(Curve.fromJSON(c));
       this.state.curves.addCurve(Curve.fromJSON(c));
     });
   }
@@ -124,6 +132,7 @@ class Graph {
     VerticalRuler.render(this.state);
     HorizontalRuler.render(this.state);
     CurveRenderer.render(this.state);
+    BoxRenderer.render(this.state);
     CurvePropertiesRenderer.render(this.state);
     MenuRenderer.render(this.state);
 

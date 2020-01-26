@@ -5,6 +5,7 @@ export interface DragEvent {
   delta: Vec2;
   mousePosition: Vec2;
   startingPosition: Vec2;
+  previousCallPosition: Vec2;
 
   isClick: boolean;
   isMouseUp: boolean;
@@ -54,6 +55,7 @@ export default {
               delta: vec2(0, 0),
               mousePosition: vec2(e.x, e.y),
               startingPosition: state.startingPosition,
+              previousCallPosition: state.originalPosition,
               isClick: true,
               isMouseUp: false,
               isStartDrag: false,
@@ -68,6 +70,9 @@ export default {
             binding.value(ev);
           }
         }
+
+        e.preventDefault();
+        return false;
       }
     });
 
@@ -78,6 +83,7 @@ export default {
           delta: vec2(0, 0),
           mousePosition: vec2(e.x, e.y),
           startingPosition: state.startingPosition,
+          previousCallPosition: state.originalPosition,
           isClick: false,
           isMouseUp: true,
           isStartDrag: false,
@@ -103,6 +109,7 @@ export default {
         e.y - state.originalPosition.y
       );
 
+      const original = vec2(state.originalPosition.x, state.originalPosition.y);
       state.originalPosition = vec2(e.x, e.y);
 
       if (typeof binding.value === "function" && state.mouseDown) {
@@ -110,6 +117,7 @@ export default {
           delta: delta,
           mousePosition: vec2(e.x, e.y),
           startingPosition: state.startingPosition,
+          previousCallPosition: original,
           isClick: false,
           isMouseUp: false,
           isStartDrag: false,

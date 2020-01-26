@@ -34,27 +34,33 @@ interface SelectionHistoryEntry {
   handle: SelectedPointType;
 }
 
+type SelectedForeachCallback = (
+  c: Curve,
+  cp: ControlPoint | null,
+  idx: number
+) => void;
+
 export class SelectedPoint {
-  curve: Curve | null = null;
-  point: ControlPoint | null = null;
+  curve: Curve[] = [];
+  point: (ControlPoint | null)[] = [];
   handle: SelectedPointType = SelectedPointType.Point;
 
   pointHistory: SelectionHistoryEntry[] = [];
   lastSelectedPointQuery: Vec2 = vec2(0, 0);
 
   public selectPoint(p: SelectedPoint) {
-    if (this.point) {
-      if (this.curve) {
+    this.foreach((c, p) => {
+      if (p) {
         this.pointHistory.push({
-          curve: this.curve,
-          point: this.point,
+          curve: c,
+          point: p,
           handle: this.handle
         });
       }
+    });
 
-      while (this.pointHistory.length > 32) {
-        this.pointHistory.shift();
-      }
+    while (this.pointHistory.length > 32) {
+      this.pointHistory.shift();
     }
 
     this.point = p.point;
@@ -63,6 +69,32 @@ export class SelectedPoint {
     }
 
     this.handle = p.handle;
+  }
+
+  public foreach(cb: SelectedForeachCallback) {
+    for (let i = 0; i < this.curve.length; ++i) {
+      cb(this.curve[i], this.point[i], i);
+    }
+  }
+
+  public hasAnyCurves() {
+    return this.curve.length !== 0;
+  }
+
+  public hasAnyPoints() {
+    return this.point.length !== 0;
+  }
+
+  public isSinglePoint() {
+    return this.curve.length == 1 && this.point.length == 1 && this.point[0];
+  }
+
+  public hasCurve(t: Curve): boolean {
+    return this.curve.find(c => c === t) !== undefined;
+  }
+
+  public hasPoint(t: ControlPoint) {
+    return this.point.find(p => p === t) !== undefined;
   }
 }
 
@@ -76,6 +108,7 @@ export default class Curves {
 
   public trySelectPoint(query: Vec2): SelectedPoint {
     const result = new SelectedPoint();
+    const current = this.parent.selected;
 
     const squaredDistance = (a: Vec2, b: Vec2) => {
       const dx = b.x - a.x;
@@ -107,13 +140,8 @@ export default class Curves {
           });
         }
 
-        if (this.parent.selected.point) {
-          // Can only select handles if the point they belong to is already selected.
-          const sp = this.parent.selected.point;
-          if (point !== sp) {
-            continue;
-          }
-
+        // Can only select handles if the point they belong to is already selected.
+        if (current.hasPoint(point)) {
           // Select the forward handle iff this is a beizer curve
           if (
             isBeizer(point.type) &&
@@ -146,8 +174,8 @@ export default class Curves {
     // Only use the historical discrimination method iff the clicks are
     // close enough to be ambiguous and there is history
     const useHistory =
-      this.parent.selected.pointHistory.length != 0 &&
-      squaredDistance(this.parent.selected.lastSelectedPointQuery, query) <
+      current.pointHistory.length != 0 &&
+      squaredDistance(current.lastSelectedPointQuery, query) <
         SELECTION_DISTANCE;
 
     if (useHistory) {
@@ -155,12 +183,8 @@ export default class Curves {
       // Compute the historical rank
       const rankedPoints = candidatePoints.map(p => {
         let index = -1;
-        for (
-          let i = this.parent.selected.pointHistory.length - 1;
-          i >= 0;
-          --i
-        ) {
-          const cp = this.parent.selected.pointHistory[i];
+        for (let i = current.pointHistory.length - 1; i >= 0; --i) {
+          const cp = current.pointHistory[i];
           if (
             cp.curve == p.curve &&
             cp.handle == p.handle &&
@@ -185,15 +209,15 @@ export default class Curves {
 
       if (rankedPoints.length > 0) {
         const firstRanked = rankedPoints[0];
-        result.point = firstRanked.point;
-        result.curve = firstRanked.curve;
+        result.point = [firstRanked.point];
+        result.curve = [firstRanked.curve];
         result.handle = firstRanked.handle;
       }
     } else if (candidatePoints.length > 0) {
       // Prefer active curve, handles.
       const rankedPoints = candidatePoints.map(p => {
         let rank = 0;
-        if (p.curve == this.parent.selected.curve) {
+        if (current.hasCurve(p.curve)) {
           rank -= 2;
         }
 
@@ -215,12 +239,15 @@ export default class Curves {
 
       // Prefer the handles if we don't have history
       const firstRanked = rankedPoints[0];
-      result.point = firstRanked.point;
-      result.curve = firstRanked.curve;
+      result.point = [firstRanked.point];
+      result.curve = [firstRanked.curve];
       result.handle = firstRanked.handle;
     }
 
     this.parent.selected.lastSelectedPointQuery = query;
+    if (result.curve.length == 0 && this.parent.selected.hasAnyCurves()) {
+      result.curve = [this.parent.selected.curve[0]];
+    }
     return result;
   }
 
@@ -249,106 +276,113 @@ export default class Curves {
     this.curves.push(c);
 
     if (!this.parent.selected.curve) {
-      this.parent.selected.curve = c;
+      this.parent.selected.curve = [c];
+    }
+  }
+
+  public deltaBetween(point: SelectedPoint, position: Vec2): Vec2 {
+    if (!point.isSinglePoint()) {
+      throw "Invalid";
+    }
+
+    switch (point.handle) {
+      case SelectedPointType.Backward:
+        return sub(position, point.point[0]!.backwardsHandle);
+      case SelectedPointType.Forward:
+        return sub(position, point.point[0]!.forwardHandle);
+      case SelectedPointType.Point:
+        return sub(position, point.point[0]!.position);
     }
   }
 
   public modifyPoint(
-    point: SelectedPoint,
+    sp: SelectedPoint,
     position: Vec2,
-    scale: Vec2 = vec2(1, 1)
+    scale: Vec2 = vec2(1, 1),
+    movement: Vec2 = vec2(0, 0),
+    movementScale: Vec2 = vec2(1, 1)
   ) {
-    if (!point.curve || !point.point) {
-      console.log("curve or point null, skipping");
-      return;
-    }
-
     // Clear out the selection history on drag.
-    this.parent.selected.pointHistory = [];
-    point.curve.invalidateLUTs();
+    sp.pointHistory = [];
 
-    switch (point.handle) {
-      case SelectedPointType.Backward: {
-        const delta = sub(position, point.point.backwardsHandle);
-        const modified = mul(delta, scale);
-        const next = add(point.point.backwardsHandle, modified);
+    sp.foreach((curve: Curve, point: ControlPoint | null) => {
+      if (!point) {
+        return;
+      }
 
-        next.x = Math.min(next.x, point.point.position.x);
-        point.point.backwardsHandle = next;
+      curve.invalidateLUTs();
 
-        if (point.point.type === ControlPointType.BeizerContinuous) {
-          const p = point.point.backwardsHandle;
-          const negated = negate(sub(p, point.point.position));
-          const forwardDiff = sub(
-            point.point.forwardHandle,
-            point.point.position
-          );
-          if (negated.x === 0) {
-            negated.x = 0.0001;
+      switch (sp.handle) {
+        case SelectedPointType.Backward: {
+          const delta = sub(position, point.backwardsHandle);
+          const modified = add(mul(delta, scale), mul(movement, movementScale));
+          const next = add(point.backwardsHandle, modified);
+
+          next.x = Math.min(next.x, point.position.x);
+          point.backwardsHandle = next;
+
+          if (point.type === ControlPointType.BeizerContinuous) {
+            const p = point.backwardsHandle;
+            const negated = negate(sub(p, point.position));
+            const forwardDiff = sub(point.forwardHandle, point.position);
+            if (negated.x === 0) {
+              negated.x = 0.0001;
+            }
+
+            const scale = forwardDiff.x / negated.x;
+            const mirror = add(
+              point.position,
+              mul(negated, vec2(scale, scale))
+            );
+
+            point.forwardHandle = mirror;
+          }
+          break;
+        }
+        case SelectedPointType.Forward: {
+          const delta = sub(position, point.forwardHandle);
+          const modified = add(mul(delta, scale), mul(movement, movementScale));
+
+          const next = add(point.forwardHandle, modified);
+          next.x = Math.max(next.x, point.position.x);
+          point.forwardHandle = next;
+
+          if (point.type === ControlPointType.BeizerContinuous) {
+            const p = point.forwardHandle;
+            const negated = negate(sub(p, point.position));
+            const backwardDiff = sub(point.backwardsHandle, point.position);
+            if (negated.x === 0) {
+              negated.x = -0.0001;
+            }
+
+            const scale = backwardDiff.x / negated.x;
+            const mirror = add(
+              point.position,
+              mul(negated, vec2(scale, scale))
+            );
+
+            point.backwardsHandle = mirror;
           }
 
-          const scale = forwardDiff.x / negated.x;
-          const mirror = add(
-            point.point.position,
-            mul(negated, vec2(scale, scale))
-          );
-
-          point.point.forwardHandle = mirror;
+          break;
         }
+        case SelectedPointType.Point: {
+          position.x = Math.round(position.x);
 
-        break;
-      }
-      case SelectedPointType.Forward: {
-        const delta = sub(position, point.point.forwardHandle);
-        const modified = mul(delta, scale);
+          const delta = sub(position, point.position);
+          const modified = add(mul(delta, scale), mul(movement, movementScale));
 
-        const next = add(point.point.forwardHandle, modified);
-        next.x = Math.max(next.x, point.point.position.x);
-        point.point.forwardHandle = next;
-
-        if (point.point.type === ControlPointType.BeizerContinuous) {
-          const p = point.point.forwardHandle;
-          const negated = negate(sub(p, point.point.position));
-          const backwardDiff = sub(
-            point.point.backwardsHandle,
-            point.point.position
-          );
-          if (negated.x === 0) {
-            negated.x = -0.0001;
-          }
-
-          const scale = backwardDiff.x / negated.x;
-          const mirror = add(
-            point.point.position,
-            mul(negated, vec2(scale, scale))
-          );
-
-          point.point.backwardsHandle = mirror;
+          point.position = add(point.position, modified);
+          point.forwardHandle = add(point.forwardHandle, modified);
+          point.backwardsHandle = add(point.backwardsHandle, modified);
+          break;
         }
-
-        break;
+        default:
+          exhaustive(sp.handle);
       }
-      case SelectedPointType.Point: {
-        position.x = Math.round(position.x);
 
-        const delta = sub(position, point.point.position);
-        const modified = mul(delta, scale);
-
-        point.point.position = add(point.point.position, modified);
-        point.point.forwardHandle = add(point.point.forwardHandle, modified);
-        point.point.backwardsHandle = add(
-          point.point.backwardsHandle,
-          modified
-        );
-
-        point.point.position.x = Math.round(point.point.position.x);
-        break;
-      }
-      default:
-        exhaustive(point.handle);
-    }
-
-    this.sortCurve(point.curve);
+      this.sortCurve(curve);
+    });
   }
 
   public propertiesClick(query: Vec2): StateEvent {
@@ -366,38 +400,65 @@ export default class Curves {
       );
     };
 
+    const setInputPosition = (x: number, y: number) => {
+      this.parent.inputField.style.setProperty("left", `${x.toFixed(2)}px`);
+      this.parent.inputField.style.setProperty("top", `${y.toFixed(2)}px`);
+    };
+
+    const setInputValue = (v: number | string) => {
+      if (typeof v === "number") {
+        this.parent.inputField.value = v.toFixed(3);
+        return;
+      }
+
+      if (typeof v === "string") {
+        this.parent.inputField.value = v;
+        return;
+      }
+
+      exhaustive(v);
+    };
+
+    const selected = this.parent.selected;
+
     if (selectedProperty(35, 0, offsets.value)) {
-      if (this.parent.selected.point) {
-        const point = this.parent.selected.point;
-        this.parent.inputField.x(left + offsets.color);
-        this.parent.inputField.y(25);
+      if (selected.isSinglePoint()) {
+        const point = this.parent.selected.point[0]!;
+
+        setInputPosition(left + offsets.color, 25);
 
         if (this.parent.selected.handle == SelectedPointType.Point) {
-          this.parent.inputField.value(point.position.x.toFixed(3));
+          setInputValue(point.position.x);
         } else if (this.parent.selected.handle == SelectedPointType.Forward) {
-          this.parent.inputField.value(point.forwardHandle.x.toFixed(3));
+          setInputValue(point.forwardHandle.x);
         } else if (this.parent.selected.handle == SelectedPointType.Backward) {
-          this.parent.inputField.value(point.backwardsHandle.x.toFixed(3));
+          setInputValue(point.backwardsHandle.x);
         }
-
+        return event(StateActionKeys.EditPointFrame);
+      } else if (selected.point.length >= 2) {
+        setInputValue("...");
         return event(StateActionKeys.EditPointFrame);
       }
     }
 
     if (selectedProperty(35, offsets.value, offsets.visible)) {
-      if (this.parent.selected.point) {
-        const point = this.parent.selected.point;
-        this.parent.inputField.x(left + offsets.value);
-        this.parent.inputField.y(25);
+      if (selected.isSinglePoint()) {
+        const point = this.parent.selected.point[0]!;
+
+        setInputPosition(left + offsets.value, 25);
+
         if (this.parent.selected.handle == SelectedPointType.Point) {
-          this.parent.inputField.value(point.position.y);
+          setInputValue(point.position.y);
         } else if (this.parent.selected.handle == SelectedPointType.Forward) {
-          this.parent.inputField.value(point.forwardHandle.y.toFixed(3));
+          setInputValue(point.forwardHandle.y);
         } else if (this.parent.selected.handle == SelectedPointType.Backward) {
-          this.parent.inputField.value(point.backwardsHandle.y.toFixed(3));
+          setInputValue(point.backwardsHandle.y);
         }
 
         return event(StateActionKeys.EditPointValue);
+      } else if (selected.point.length >= 2) {
+        setInputValue("...");
+        return event(StateActionKeys.EditPointFrame);
       }
     }
 
@@ -406,19 +467,19 @@ export default class Curves {
       const heightOffset = i * 19 + 90;
 
       const selection = new SelectedPoint();
-      selection.curve = this.curves[i];
+      selection.curve = [this.curves[i]];
 
       if (selectedProperty(heightOffset, 0, offsets.value)) {
         this.parent.selected.selectPoint(selection);
-        this.parent.inputField.x(left + offsets.name);
-        this.parent.inputField.y(heightOffset - 10);
-        this.parent.inputField.value(selection.curve.name);
+
+        setInputPosition(left + offsets.name, heightOffset - 10);
+        setInputValue(this.curves[i].name);
 
         return event(StateActionKeys.EditName);
       }
 
       if (selectedProperty(heightOffset, offsets.value, offsets.visible)) {
-        const info = selection.curve.curveInformationAt(
+        const info = this.curves[i].curveInformationAt(
           this.parent.grid.guidePoint.x
         );
 
@@ -427,13 +488,10 @@ export default class Curves {
           info.framesFromFirst == info.framesBetween
         ) {
           this.parent.selected.selectPoint(selection);
-          this.parent.inputField.x(left + offsets.value);
-          this.parent.inputField.y(heightOffset - 10);
-          this.parent.inputField.fontColor("yellow");
-          this.parent.inputField.value(
-            selection.curve.evaluate(this.parent.grid.guidePoint.x)
-          );
+          this.parent.inputField.style.setProperty("color", "yellow");
 
+          setInputPosition(left + offsets.value, heightOffset - 10);
+          setInputValue(this.curves[i].evaluate(this.parent.grid.guidePoint.x));
           return event(StateActionKeys.EditValue);
         }
       }

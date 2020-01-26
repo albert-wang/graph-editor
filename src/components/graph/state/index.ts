@@ -4,15 +4,14 @@ import { Curve, ControlPoint, ControlPointType } from "@graph/shared/curves";
 import GridState from "./grid";
 import Curves, { SelectedPoint } from "./curves";
 import Menu from "./menu";
+import { BoxState, BoxSelection } from "./box";
 import { StateActions, StateActionKeys, StateEvent, event } from "../actions";
-
-// @ts-ignore
-import CanvasInput from "../3rdparty/canvasinput";
-import colors from "../rendering/colors";
 
 interface InitialState {
   ctx: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
+  inputField: HTMLInputElement;
+
   grid: {
     area: Rect;
   };
@@ -29,6 +28,7 @@ export default class State {
 
   // Point selection.
   public selected: SelectedPoint;
+  public boxSelection: BoxSelection;
 
   // Menu operation
   public menu: Menu;
@@ -41,7 +41,7 @@ export default class State {
   public lastUndoPushTime: number;
 
   // Inputfield for editing names/values
-  public inputField: CanvasInput;
+  public inputField: HTMLInputElement;
   public editingName: boolean;
   public editingValue: boolean;
   public editingPointValue: boolean;
@@ -55,8 +55,15 @@ export default class State {
 
   constructor(gs: InitialState) {
     this.selected = new SelectedPoint();
-    this.selected.curve = null;
-    this.selected.point = null;
+    this.selected.curve = [];
+    this.selected.point = [];
+
+    this.boxSelection = {
+      first: vec2(0, 0),
+      second: vec2(0, 0),
+      dragPoint: vec2(0, 0),
+      state: BoxState.Inactive
+    };
 
     this.ctx = gs.ctx;
     this.canvas = gs.canvas;
@@ -69,22 +76,8 @@ export default class State {
     this.editingValue = false;
     this.editingPointValue = false;
     this.editingPointFrame = false;
-    this.inputField = new CanvasInput({
-      canvas: gs.canvas,
-      x: 50,
-      y: 50,
-      fontSize: 12,
-      width: 120,
-      backgroundColor: colors.PropertiesBackground,
-      fontColor: colors.BrightText,
-      borderWidth: 1,
-      borderColor: colors.BrightText,
-      boxShadow: "0px 0px 0px #000",
-      innerShadow: "0px 0px 0px #000",
-      onsubmit: () => {
-        this.dispatch(event(StateActionKeys.SubmitEdit));
-      }
-    });
+
+    this.inputField = gs.inputField;
 
     // A set of debug curves
     this.curves = new Curves(this);
@@ -111,6 +104,29 @@ export default class State {
     ];
     this.curves.addCurve(x);
 
+    const y = new Curve("Y");
+    y.controlPoints = [
+      new ControlPoint(
+        ControlPointType.Beizer,
+        vec2(1, -5),
+        vec2(11, -5),
+        vec2(-9, -5)
+      ),
+      new ControlPoint(
+        ControlPointType.BeizerContinuous,
+        vec2(60, 5),
+        vec2(70, 5),
+        vec2(50, 5)
+      ),
+      new ControlPoint(
+        ControlPointType.Linear,
+        vec2(80, 7),
+        vec2(90, 10),
+        vec2(70, 10)
+      )
+    ];
+    this.curves.addCurve(y);
+
     this.undoStack = [];
     this.redoStack = [];
     this.lastUndoPushTime = 0;
@@ -123,6 +139,10 @@ export default class State {
   // Menu dispatch functionality
   public dispatch(e: StateEvent) {
     StateActions.dispatch(e, this);
+  }
+
+  public submitInput() {
+    this.dispatch(event(StateActionKeys.SubmitEdit));
   }
 
   public isEditing() {
@@ -183,6 +203,10 @@ export default class State {
     this.redoStack = [];
   }
 
+  public deleteUndoState() {
+    this.undoStack.pop();
+  }
+
   public undo() {
     const stateCopy = JSON.parse(JSON.stringify(this.curves.curves));
     const curvesState = this.undoStack.pop();
@@ -190,13 +214,16 @@ export default class State {
       this.curves.curves = curvesState.map(c => {
         const transformed = Curve.fromJSON(c);
 
-        if (this.selected.curve && c.id == this.selected.curve.id) {
-          this.selected.curve = transformed;
-        }
+        this.selected.foreach((curve: Curve, _, i: number) => {
+          if (curve.id === c.id) {
+            this.selected.curve[i] = c;
+          }
+        });
+
         return transformed;
       });
 
-      this.selected.point = null;
+      this.selected.point = [];
       this.redoStack.push(stateCopy);
     }
   }
@@ -207,13 +234,15 @@ export default class State {
     if (curvesState) {
       this.curves.curves = curvesState.map(c => {
         const transformed = Curve.fromJSON(c);
-        if (this.selected.curve && c.id == this.selected.curve.id) {
-          this.selected.curve = transformed;
-        }
+        this.selected.foreach((curve: Curve, _, i: number) => {
+          if (curve.id === c.id) {
+            this.selected.curve[i] = c;
+          }
+        });
         return transformed;
       });
 
-      this.selected.point = null;
+      this.selected.point = [];
       this.undoStack.push(stateCopy);
     }
   }

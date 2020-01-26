@@ -15,6 +15,9 @@ export default {
   SpacerColor: "#494949",
   DisabledText: "#494949",
 
+  BoxFill: "#008080",
+  BoxBorder: "#4dffff",
+
   LineColors: [
     "#FF0000",
     "#00FF00",

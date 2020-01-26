@@ -2,7 +2,7 @@ import State from "../state";
 import { StateActionKeys } from "./action_keys";
 import { vec2 } from "@graph/shared/math";
 import { SelectedPoint, SelectedPointType } from "../state/curves";
-import { ControlPoint } from "@graph/shared/curves";
+import { Curve, ControlPoint } from "@graph/shared/curves";
 import { StateEvent } from ".";
 
 import copy from "copy-to-clipboard";
@@ -27,8 +27,8 @@ export class EditorActions {
       },
 
       [StateActionKeys.SetGuideFrameToSelectedPointFrame]() {
-        if (state.selected.point) {
-          state.grid.guidePoint.x = state.selected.point.position.x;
+        if (state.selected.isSinglePoint()) {
+          state.grid.guidePoint.x = state.selected.point[0]!.position.x;
         }
       },
 
@@ -45,18 +45,32 @@ export class EditorActions {
       [StateActionKeys.SubmitEdit]() {
         if (state.editingName && state.selected.curve) {
           state.pushUndoState();
-          state.selected.curve.name = state.inputField.value();
+          // This only modifies the first selected curve
+          if (state.selected.curve.length > 0) {
+            state.selected.curve[0].name = state.inputField.value;
+          }
         }
 
         if (state.editingValue && state.selected.curve) {
-          const info = state.selected.curve.curveInformationAt(
-            state.grid.guidePoint.x
-          );
-
+          let value = 0;
           try {
-            const value = parseFloat(state.inputField.value());
-            let point: ControlPoint | null = null;
+            value = parseFloat(state.inputField.value);
+          } catch (e) {
+            return;
+          }
 
+          state.pushUndoState();
+          let modified = false;
+          const seenCurves: Record<number, boolean> = {};
+
+          state.selected.foreach((c: Curve) => {
+            if (seenCurves[c.id]) {
+              return;
+            }
+
+            const info = c.curveInformationAt(state.grid.guidePoint.x);
+
+            let point: ControlPoint | null = null;
             if (info.framesFromFirst === 0 && info.points[0]) {
               point = info.points[0];
             } else if (
@@ -67,22 +81,26 @@ export class EditorActions {
             }
 
             if (point) {
-              state.pushUndoState();
+              modified = true;
               const sp = new SelectedPoint();
-              sp.curve = state.selected.curve;
-              sp.point = point;
+              sp.curve = [c];
+              sp.point = [point];
               sp.handle = SelectedPointType.Point;
 
               state.curves.modifyPoint(sp, vec2(0, value), vec2(0, 1));
             }
-          } catch (e) {
-            // Unparsable, fail to set.
+
+            seenCurves[c.id] = true;
+          });
+
+          if (!modified) {
+            state.deleteUndoState();
           }
         }
 
-        if (state.editingPointFrame && state.selected.point) {
+        if (state.editingPointFrame) {
           try {
-            const value = parseFloat(state.inputField.value());
+            const value = parseFloat(state.inputField.value);
 
             state.pushUndoState();
             state.curves.modifyPoint(
@@ -95,9 +113,9 @@ export class EditorActions {
           }
         }
 
-        if (state.editingPointValue && state.selected.point) {
+        if (state.editingPointValue) {
           try {
-            const value = parseFloat(state.inputField.value());
+            const value = parseFloat(state.inputField.value);
 
             state.pushUndoState();
             state.curves.modifyPoint(
@@ -114,23 +132,32 @@ export class EditorActions {
         state.editingValue = false;
         state.editingPointValue = false;
         state.editingPointFrame = false;
+        state.canvas.focus();
       },
 
       [StateActionKeys.EditName]() {
         state.editingName = true;
+
+        state.inputField.style.setProperty("visibility", "visible");
         state.inputField.focus();
       },
 
       [StateActionKeys.EditValue]() {
         state.editingValue = true;
+
+        state.inputField.style.setProperty("visibility", "visible");
         state.inputField.focus();
       },
       [StateActionKeys.EditPointFrame]() {
         state.editingPointFrame = true;
+
+        state.inputField.style.setProperty("visibility", "visible");
         state.inputField.focus();
       },
       [StateActionKeys.EditPointValue]() {
         state.editingPointValue = true;
+
+        state.inputField.style.setProperty("visibility", "visible");
         state.inputField.focus();
       },
 

@@ -201,12 +201,12 @@ export default class Menu {
 
   private rebuildOptions() {
     let hasSelectedPoint = false;
-    if (this.parent.selected && this.parent.selected.point) {
+    if (this.parent.selected && this.parent.selected.hasAnyPoints()) {
       hasSelectedPoint = true;
     }
 
     let hasSelectedCurve = false;
-    if (this.parent.selected && this.parent.selected.curve) {
+    if (this.parent.selected && this.parent.selected.hasAnyCurves()) {
       hasSelectedCurve = true;
     }
 

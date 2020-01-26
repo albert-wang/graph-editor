@@ -10,6 +10,10 @@
       @wheel="mouseWheel"
       @mousemove="mouseMove"
     />
+
+    <form @submit="submitAction">
+      <input type="text" class="graph-input" ref="input" />
+    </form>
   </div>
 </template>
 
@@ -26,6 +30,7 @@ import { DragEvent } from "./components/graph/directives/middle-drag";
 export default class App extends Vue {
   $refs!: {
     canvas: HTMLCanvasElement;
+    input: HTMLInputElement;
   };
 
   graph?: Graph;
@@ -45,7 +50,12 @@ export default class App extends Vue {
     canvas.width = bounds.width;
     canvas.height = bounds.height;
 
-    this.graph = new Graph(canvas.getContext("2d")!, canvas, bounds);
+    this.graph = new Graph(
+      canvas.getContext("2d")!,
+      canvas,
+      bounds,
+      this.$refs.input
+    );
 
     requestAnimationFrame((t: number) => {
       this.renderGraph(t);
@@ -109,6 +119,17 @@ export default class App extends Vue {
     this.graph.close();
   }
 
+  public submitAction(e: Event) {
+    e.preventDefault();
+
+    if (!this.graph) {
+      return false;
+    }
+
+    this.graph.submitInput();
+    return false;
+  }
+
   public resize() {
     const bodyEl = document.querySelector("body")!;
     const bounds = bodyEl.getBoundingClientRect();
@@ -152,5 +173,17 @@ body {
 #app {
   height: 100%;
   width: 100%;
+}
+
+.graph-input {
+  font-size: 12px;
+  width: 120px;
+  border-width: 1px;
+  box-shadow: 0px 0px 0px #000;
+  position: absolute;
+
+  background-color: #4f4f4f;
+  color: #dfdfdf;
+  border-color: #dfdfdf;
 }
 </style>

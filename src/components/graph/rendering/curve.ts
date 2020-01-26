@@ -13,9 +13,7 @@ export default class CurveRenderer {
     const ctx = state.ctx;
     ctx.save();
 
-    const activeCurve = (c: Curve) => {
-      return state.selected.curve && state.selected.curve === c;
-    };
+    const activeCurve = (c: Curve) => state.selected.hasCurve(c);
 
     // Draw inactive curves first
     state.curves.curves.forEach((curve, i) => {
@@ -66,7 +64,7 @@ export default class CurveRenderer {
     ctx.fillStyle = "yellow";
 
     // If this is not the selected point, just draw the handle.
-    if (state.selected.point === current) {
+    if (state.selected.hasPoint(current)) {
       ctx.fillStyle = "orange";
 
       // Only draw the backwards handle if the backwards point

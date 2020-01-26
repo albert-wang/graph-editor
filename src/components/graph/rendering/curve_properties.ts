@@ -43,31 +43,31 @@ export default class CurvePropertiesRenderer {
     ctx.fillStyle = Colors.BrightText;
 
     let pointValues = [0, 0];
-    const point = state.selected.point;
-    if (point && state.selected.handle != SelectedPointType.Point) {
-      if (state.selected.handle == SelectedPointType.Forward) {
-        pointValues = [point.forwardHandle.x, point.forwardHandle.y];
+    if (state.selected.isSinglePoint()) {
+      const point = state.selected.point[0]!;
+      if (state.selected.handle != SelectedPointType.Point) {
+        if (state.selected.handle == SelectedPointType.Forward) {
+          pointValues = [point.forwardHandle.x, point.forwardHandle.y];
 
-        ctx.fillText("Forward Handle X", left + 10, 10);
-        ctx.fillText("Y", left + 200, 10);
-      } else if (state.selected.handle == SelectedPointType.Backward) {
-        pointValues = [point.backwardsHandle.x, point.backwardsHandle.y];
+          ctx.fillText("Forward Handle X", left + 10, 10);
+          ctx.fillText("Y", left + 200, 10);
+        } else if (state.selected.handle == SelectedPointType.Backward) {
+          pointValues = [point.backwardsHandle.x, point.backwardsHandle.y];
 
-        ctx.fillText("Backward Handle X", left + 10, 10);
-        ctx.fillText("Y", left + 200, 10);
-      }
-    } else {
-      if (point) {
+          ctx.fillText("Backward Handle X", left + 10, 10);
+          ctx.fillText("Y", left + 200, 10);
+        }
+      } else {
         pointValues = [point.position.x, point.position.y];
-      }
 
-      ctx.fillText("Point Frame", left + 10, 10);
-      ctx.fillText("Value", left + 200, 10);
+        ctx.fillText("Point Frame", left + 10, 10);
+        ctx.fillText("Value", left + 200, 10);
+      }
     }
 
     CurvePropertiesRenderer.horz(ctx, 19, left, state.bounds.x);
 
-    if (state.selected.point) {
+    if (state.selected.isSinglePoint()) {
       ctx.fillStyle = Colors.GuideLine;
       ctx.fillText(
         `${pointValues[0].toFixed(3)}`,
@@ -107,7 +107,9 @@ export default class CurvePropertiesRenderer {
       state.editingPointFrame ||
       state.editingPointValue
     ) {
-      state.inputField.render();
+      state.inputField.style.setProperty("visibility", "visible");
+    } else {
+      state.inputField.style.setProperty("visibility", "hidden");
     }
     ctx.restore();
   }

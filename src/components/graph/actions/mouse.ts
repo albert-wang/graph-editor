@@ -1,9 +1,13 @@
 import State from "../state";
-import { Vec2, vec2, mul } from "@graph/shared/math";
+import { BoxState, pointInSelectedBox } from "../state/box";
+import { vec2, mul, sub } from "@graph/shared/math";
+import { Curve, ControlPoint } from "@graph/shared/curves";
 
 import { DragEvent } from "../directives/middle-drag";
 import sizes from "../rendering/sizes";
 import { StateActionKeys, event } from ".";
+import { exhaustive } from "../util/exhaustive";
+import { SelectedPoint } from "../state/curves";
 
 export default class MouseActions {
   public static wheel(e: WheelEvent, state: State) {
@@ -78,23 +82,78 @@ export default class MouseActions {
       return;
     }
 
-    // Otherwise, this is a straight up drag - modify the selected point iff one exists.
-    if (e.isStartDrag && state.selected.point) {
-      state.pushUndoState();
-    }
+    // Drag with selected point - modify the selected point iff one exists.
+    if (state.selected.isSinglePoint()) {
+      if (e.isStartDrag) {
+        state.pushUndoState();
+      }
 
-    if (!e.isMouseUp) {
-      if (state.selected && state.selected.point) {
-        let scale = vec2(1, 1);
-        if (e.ctrl) {
-          scale = mul(scale, vec2(1, 0));
+      if (!e.isMouseUp) {
+        if (state.selected) {
+          let scale = vec2(1, 1);
+          if (e.ctrl) {
+            scale = mul(scale, vec2(1, 0));
+          }
+
+          if (e.shift) {
+            scale = mul(scale, vec2(0, 1));
+          }
+
+          state.curves.modifyPoint(state.selected, point, scale);
         }
+      }
+    } else {
+      // Check to see if we're on a point anywhere in the box select.
+      if (state.selected.point.length > 1) {
+        // Alright, we're trying to drag a point, specifically newSelection.point[0]
+        // Compute the delta.
+        const a = state.grid.unproject(e.previousCallPosition);
+        const delta = sub(point, a);
 
-        if (e.shift) {
-          scale = mul(scale, vec2(0, 1));
+        state.curves.modifyPoint(
+          state.selected,
+          vec2(0, 0),
+          vec2(0, 0),
+          delta,
+          vec2(1, 1)
+        );
+        return;
+      }
+
+      // Try to start a box selection.
+      switch (state.boxSelection.state) {
+        case BoxState.Inactive: {
+          if (e.isStartDrag) {
+            state.boxSelection.first = point;
+            state.boxSelection.second = point;
+
+            state.boxSelection.state = BoxState.Selecting;
+          }
+          break;
         }
+        case BoxState.Selecting: {
+          state.boxSelection.second = point;
+          if (e.isMouseUp) {
+            state.boxSelection.state = BoxState.Inactive;
 
-        state.curves.modifyPoint(state.selected, point, scale);
+            const selection = new SelectedPoint();
+            state.curves.curves.forEach((c: Curve) => {
+              c.controlPoints.forEach((cp: ControlPoint) => {
+                if (pointInSelectedBox(cp.position, state.boxSelection)) {
+                  selection.curve.push(c);
+                  selection.point.push(cp);
+                }
+              });
+            });
+
+            if (selection.hasAnyCurves()) {
+              state.selected = selection;
+            }
+          }
+          break;
+        }
+        default:
+          exhaustive(state.boxSelection.state);
       }
     }
   }
