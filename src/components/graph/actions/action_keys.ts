@@ -18,6 +18,8 @@ enum StateActionKeys {
   SetGuideFrameToSelectedPointFrame = "set-guide-frame-to-selected-point-frame",
   SetGuideValue = "set-guide-value",
   MoveScreen = "move-screen",
+  ModifyPoint = "modify-point",
+  MoveCurrentSelection = "move-current-selection",
 
   ChangeInterpolationType = "change-interpolation-type",
   UseFixedControlPoints = "use-fixed-control-points",

@@ -11,7 +11,7 @@ export class EditorActions {
   public static events(e: StateEvent, state: State) {
     return {
       [StateActionKeys.Zoom]() {
-        state.grid.zoom(-e.mousePosition.y);
+        state.grid.zoom(-e.data.magnitude);
       },
 
       [StateActionKeys.Copy]() {

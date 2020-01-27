@@ -11,7 +11,7 @@ import { SelectedPoint } from "../state/curves";
 
 export default class MouseActions {
   public static wheel(e: WheelEvent, state: State) {
-    state.dispatch(event(StateActionKeys.Zoom, vec2(e.deltaX, e.deltaY)));
+    state.dispatch(event(StateActionKeys.Zoom, { magnitude: e.deltaY }));
   }
 
   public static move(e: MouseEvent, state: State) {
@@ -22,11 +22,11 @@ export default class MouseActions {
 
   public static middleDrag(e: DragEvent, state: State) {
     if (state.isEditing()) {
-      state.dispatch(event(StateActionKeys.SubmitEdit, e.mousePosition));
+      state.dispatch(event(StateActionKeys.SubmitEdit, {}, e.mousePosition));
     }
 
     state.dispatch(
-      event(StateActionKeys.MoveScreen, vec2(e.delta.x, e.delta.y))
+      event(StateActionKeys.MoveScreen, {}, vec2(e.delta.x, e.delta.y))
     );
   }
 
@@ -40,8 +40,8 @@ export default class MouseActions {
       e.startingPosition.y < sizes.HorizontalRulerHeight &&
       e.startingPosition.x < state.bounds.x - sizes.PropertiesWidth
     ) {
-      state.dispatch(event(StateActionKeys.SetGuideFrame, e.mousePosition));
-      state.dispatch(event(StateActionKeys.SetGuideValue, e.mousePosition));
+      state.dispatch(event(StateActionKeys.SetGuideFrame, {}, e.mousePosition));
+      state.dispatch(event(StateActionKeys.SetGuideValue, {}, e.mousePosition));
       return;
     }
 
@@ -49,7 +49,7 @@ export default class MouseActions {
     if (e.isClick) {
       // If this is currently editing a text field, try to submit it
       if (state.isEditing()) {
-        state.dispatch(event(StateActionKeys.SubmitEdit, e.mousePosition));
+        state.dispatch(event(StateActionKeys.SubmitEdit, {}, e.mousePosition));
       }
 
       // If the menu is visible, try to click in the menu
@@ -78,7 +78,7 @@ export default class MouseActions {
       }
 
       // Otherwise, try to click a point.
-      state.dispatch(event(StateActionKeys.SelectPoint, e.mousePosition));
+      state.dispatch(event(StateActionKeys.SelectPoint, {}, e.mousePosition));
       return;
     }
 
@@ -99,24 +99,37 @@ export default class MouseActions {
             scale = mul(scale, vec2(0, 1));
           }
 
-          state.curves.modifyPoint(state.selected, point, scale);
+          state.dispatch(
+            event(StateActionKeys.ModifyPoint, {
+              selection: state.selected,
+              moveTo: point,
+              moveToScale: scale
+            })
+          );
         }
       }
     } else {
       // Check to see if we're on a point anywhere in the box select.
+      // If we weren't, then the previous handler for a click would have
+      // selected a single point, and this condition would be false.
       if (state.selected.point.length > 1) {
+        if (e.isStartDrag) {
+          state.pushUndoState();
+        }
+
         // Alright, we're trying to drag a point, specifically newSelection.point[0]
         // Compute the delta.
         const a = state.grid.unproject(e.previousCallPosition);
         const delta = sub(point, a);
 
-        state.curves.modifyPoint(
-          state.selected,
-          vec2(0, 0),
-          vec2(0, 0),
-          delta,
-          vec2(1, 1)
+        state.dispatch(
+          event(StateActionKeys.ModifyPoint, {
+            selection: state.selected,
+            move: delta,
+            moveScale: vec2(1, 1)
+          })
         );
+
         return;
       }
 

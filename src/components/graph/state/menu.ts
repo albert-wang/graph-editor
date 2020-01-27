@@ -221,39 +221,39 @@ export default class Menu {
         this.spacer(),
         this.simpleOption(
           "Play 6fps",
-          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 6 })
+          event(StateActionKeys.PlayAtFPS, { fps: 6 })
         ),
         this.simpleOption(
           "Play 12fps",
-          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 12 })
+          event(StateActionKeys.PlayAtFPS, { fps: 12 })
         ),
         this.simpleOption(
           "Play 24fps",
-          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 24 })
+          event(StateActionKeys.PlayAtFPS, { fps: 24 })
         ),
         this.simpleOption(
           "Play 30fps",
-          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 30 })
+          event(StateActionKeys.PlayAtFPS, { fps: 30 })
         ),
         this.simpleOption(
           "Play 60fps",
-          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 60 })
+          event(StateActionKeys.PlayAtFPS, { fps: 60 })
         ),
         this.simpleOption(
           "Play 90fps",
-          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 90 })
+          event(StateActionKeys.PlayAtFPS, { fps: 90 })
         ),
         this.simpleOption(
           "Play 120fps",
-          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 120 })
+          event(StateActionKeys.PlayAtFPS, { fps: 120 })
         ),
         this.simpleOption(
           "Play 144fps",
-          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 144 })
+          event(StateActionKeys.PlayAtFPS, { fps: 144 })
         ),
         this.simpleOption(
           "Play 240fps",
-          event(StateActionKeys.PlayAtFPS, vec2(0, 0), { fps: 240 })
+          event(StateActionKeys.PlayAtFPS, { fps: 240 })
         )
       ]),
       this.spacer(),
@@ -288,25 +288,25 @@ export default class Menu {
         this.spacer(),
         this.simpleOption(
           "Linear",
-          event(StateActionKeys.ChangeInterpolationType, vec2(0, 0), {
+          event(StateActionKeys.ChangeInterpolationType, {
             type: ControlPointType.Linear
           })
         ),
         this.simpleOption(
           "Flat",
-          event(StateActionKeys.ChangeInterpolationType, vec2(0, 0), {
+          event(StateActionKeys.ChangeInterpolationType, {
             type: ControlPointType.LinearFlat
           })
         ),
         this.simpleOption(
           "Beizer",
-          event(StateActionKeys.ChangeInterpolationType, vec2(0, 0), {
+          event(StateActionKeys.ChangeInterpolationType, {
             type: ControlPointType.Beizer
           })
         ),
         this.simpleOption(
           "Continuous Beizer",
-          event(StateActionKeys.ChangeInterpolationType, vec2(0, 0), {
+          event(StateActionKeys.ChangeInterpolationType, {
             type: ControlPointType.BeizerContinuous
           })
         ),
@@ -348,7 +348,7 @@ export default class Menu {
     const easing = (name: string, values: number[]) => {
       return this.simpleOption(
         name,
-        event(StateActionKeys.UseFixedControlPoints, vec2(0, 0), {
+        event(StateActionKeys.UseFixedControlPoints, {
           first: [values[0], values[1]],
           second: [values[2], values[3]]
         })

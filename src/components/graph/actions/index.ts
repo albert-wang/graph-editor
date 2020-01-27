@@ -15,12 +15,12 @@ interface StateEvent {
 
 function event(
   e: string,
-  p: Vec2 = vec2(0, 0),
-  data: any | undefined = undefined
+  data: any | undefined = undefined,
+  mp: Vec2 | undefined = undefined
 ): StateEvent {
   return {
     event: e,
-    mousePosition: p,
+    mousePosition: mp || vec2(0, 0),
     data: data || {}
   };
 }

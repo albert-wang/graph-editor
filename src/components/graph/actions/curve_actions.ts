@@ -13,6 +13,36 @@ import {
 export class CurveActions {
   public static events(e: StateEvent, state: State) {
     return {
+      [StateActionKeys.MoveCurrentSelection]() {
+        state.pushUndoState();
+        const amount = sub(
+          state.grid.unproject(vec2(10, 10)),
+          state.grid.unproject(vec2(0, 0))
+        );
+
+        state.curves.modifyPoint(
+          state.selected,
+          vec2(0, 0),
+          vec2(0, 0),
+          amount,
+          e.data.scale
+        );
+      },
+      [StateActionKeys.ModifyPoint]() {
+        const selection = e.data.selection;
+        const moveTo = e.data.moveTo || vec2(0, 0);
+        const moveToScale = e.data.moveToScale || vec2(0, 0);
+        const move = e.data.move || vec2(0, 0);
+        const moveScale = e.data.moveScale || vec2(0, 0);
+
+        state.curves.modifyPoint(
+          selection,
+          moveTo,
+          moveToScale,
+          move,
+          moveScale
+        );
+      },
       [StateActionKeys.InsertKeyframeAllCurves]() {
         state.pushUndoState();
 
@@ -201,7 +231,8 @@ export class CurveActions {
         const point = state.grid.unproject(e.mousePosition);
         const newSelection = state.curves.trySelectPoint(point);
 
-        // If the select point was part of a multiselect, don't change the selection
+        // If the select point was part of a multiselect, don't change the selection,
+        // but do change the handle type.
         if (newSelection.isSinglePoint() && state.selected.curve.length > 1) {
           if (state.selected.hasPoint(newSelection.point[0]!)) {
             state.selected.handle = newSelection.handle;
