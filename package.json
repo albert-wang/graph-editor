@@ -12,7 +12,6 @@
     "@types/bezier-js": "0.0.8",
     "animejs": "^3.1.0",
     "bezier-js": "^2.5.1",
-    "canvasinput": "^1.2.7",
     "copy-to-clipboard": "^3.2.0",
     "core-js": "^3.4.3",
     "vue": "^2.6.10",
