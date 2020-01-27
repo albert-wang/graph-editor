@@ -20,6 +20,7 @@ enum StateActionKeys {
   MoveScreen = "move-screen",
   ModifyPoint = "modify-point",
   MoveCurrentSelection = "move-current-selection",
+  NormalizePointFrames = "normalize-point-frames",
 
   ChangeInterpolationType = "change-interpolation-type",
   UseFixedControlPoints = "use-fixed-control-points",

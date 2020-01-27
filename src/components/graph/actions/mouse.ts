@@ -113,6 +113,11 @@ export default class MouseActions {
       // If we weren't, then the previous handler for a click would have
       // selected a single point, and this condition would be false.
       if (state.selected.point.length > 1) {
+        if (e.isMouseUp) {
+          state.dispatch(event(StateActionKeys.NormalizePointFrames));
+          return;
+        }
+
         if (e.isStartDrag) {
           state.pushUndoState();
         }

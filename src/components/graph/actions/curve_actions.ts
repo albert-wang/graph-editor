@@ -13,12 +13,23 @@ import {
 export class CurveActions {
   public static events(e: StateEvent, state: State) {
     return {
+      [StateActionKeys.NormalizePointFrames]() {
+        state.curves.curves.forEach((c: Curve) => {
+          c.controlPoints.forEach(p => {
+            p.position.x = Math.round(p.position.x);
+          });
+        });
+      },
       [StateActionKeys.MoveCurrentSelection]() {
         state.pushUndoState();
         const amount = sub(
           state.grid.unproject(vec2(10, 10)),
           state.grid.unproject(vec2(0, 0))
         );
+
+        if (Math.abs(amount.x * e.data.scale.x) <= 1) {
+          amount.x = 1 / Math.abs(e.data.scale.x);
+        }
 
         state.curves.modifyPoint(
           state.selected,
