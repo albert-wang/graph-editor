@@ -151,6 +151,10 @@ export default class MouseActions {
 
             const selection = new SelectedPoint();
             state.curves.curves.forEach((c: Curve) => {
+              if (!c.visible || c.locked) {
+                return;
+              }
+
               c.controlPoints.forEach((cp: ControlPoint) => {
                 if (pointInSelectedBox(cp.position, state.boxSelection)) {
                   selection.curve.push(c);
@@ -177,9 +181,9 @@ export default class MouseActions {
         return;
       }
 
-      state.dispatch(event(StateActionKeys.SubmitEdit, e.mousePosition));
-      state.dispatch(event(StateActionKeys.SelectPoint, e.mousePosition));
-      state.dispatch(event(StateActionKeys.OpenMenu, e.mousePosition));
+      state.dispatch(event(StateActionKeys.SubmitEdit, {}, e.mousePosition));
+      state.dispatch(event(StateActionKeys.SelectPoint, {}, e.mousePosition));
+      state.dispatch(event(StateActionKeys.OpenMenu, {}, e.mousePosition));
     }
   }
 }

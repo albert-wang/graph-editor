@@ -47,10 +47,11 @@ export class CurveActions {
         state.pushUndoState();
 
         const point = new SelectedPoint();
-
         state.curves.curves.forEach(c => {
-          point.curve.push(c);
-          point.point.push(state.curves.addPoint(c, state.grid.guidePoint.x));
+          if (c.visible && !c.locked) {
+            point.curve.push(c);
+            point.point.push(state.curves.addPoint(c, state.grid.guidePoint.x));
+          }
         });
 
         state.selected = point;
