@@ -9,6 +9,7 @@ export default {
   LightLine: "#303030",
   GuideLine: "#00a6ff",
   RepeatLine: "#ffb347",
+  StartRepeatLine: "#77dd77",
   MenuBackground: "#222222",
   HighlightedItem: "#4363d8",
   HeaderColor: "#696969",

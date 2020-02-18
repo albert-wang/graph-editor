@@ -39,6 +39,8 @@ enum StateActionKeys {
   EditPointFrame = "edit-point-frame",
   EditRepeatFrame = "edit-repeat-frame",
   ClearRepeatFrame = "clear-repeat-frame",
+  EditStartRepeatFrame = "edit-start-repeat-frame",
+  ClearStartRepeatFrame = "clear-start-repeat-frame",
   SubmitEdit = "submit-edit",
 
   // Playback

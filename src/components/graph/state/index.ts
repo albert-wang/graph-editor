@@ -182,7 +182,12 @@ export default class State {
           : this.grid.repeatFrame;
 
       if (this.grid.guidePoint.x > repeatFrame) {
-        this.grid.guidePoint.x = this.curves.minimumFrame();
+        const startFrame =
+          typeof this.grid.startRepeatFrame === "undefined"
+            ? this.curves.minimumFrame()
+            : this.grid.startRepeatFrame;
+
+        this.grid.guidePoint.x = startFrame;
       }
     }
   }

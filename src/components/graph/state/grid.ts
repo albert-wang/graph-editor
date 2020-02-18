@@ -13,9 +13,13 @@ export default class GridState {
   public guidePoint: Vec2;
 
   // The repeat frame is the frame at which the animation will reset
-  // to zero from. Generally the same as guidePoint.x, until specifically
-  // set differently.
+  // from. Generally this is the last frame in the animation, but can be set
+  // differently.
   public repeatFrame: number | undefined;
+
+  // The frame from where the animation will start from after hitting the
+  // repeat frame.
+  public startRepeatFrame: number | undefined;
 
   private parent: State;
 

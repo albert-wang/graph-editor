@@ -37,6 +37,14 @@ class HorizontalRulerRenderer {
       this.renderGuideLine(state, state.grid.repeatFrame, Colors.RepeatLine);
     }
 
+    if (typeof state.grid.startRepeatFrame != "undefined") {
+      this.renderGuideLine(
+        state,
+        state.grid.startRepeatFrame,
+        Colors.StartRepeatLine
+      );
+    }
+
     this.renderGuideLine(state, state.grid.guidePoint.x, Colors.GuideLine);
   }
 

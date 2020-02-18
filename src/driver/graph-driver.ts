@@ -4,6 +4,13 @@ import { vec2 } from "../shared/math";
 import { getInstanceAnimationAndTween } from "./anime-integration";
 
 type FrameCallback = (p: Player) => void;
+type EventCallback = (p: Player, curve: string, value: number) => void;
+type CallbackType = "frame" | "loop" | "finish";
+
+interface Callback {
+  type: CallbackType;
+  callback: FrameCallback;
+}
 
 interface NormalizeParameters {
   domain?: number[];
@@ -24,7 +31,7 @@ const PlaybackFPS = 60;
 
 export class Player {
   public static LoopForever: number = -1;
-  public onframe: FrameCallback[];
+  public callbacks: Callback[];
 
   public frame: number = 0;
 
@@ -38,7 +45,7 @@ export class Player {
 
   constructor(anim: Animation) {
     this.sourceAnimation = anim;
-    this.onframe = [];
+    this.callbacks = [];
   }
 
   public loop(n: number) {
@@ -102,21 +109,45 @@ export class Player {
 
       this.frame = Math.min(this.frame, this.sourceAnimation.maximumFrame());
       if (originalFrame !== this.frame) {
-        this.trigger();
+        this.trigger("frame");
+      }
+      if (
+        originalFrame === this.frame &&
+        originalFrame === this.sourceAnimation.maximumFrame()
+      ) {
+        if (this.loopCount > 1 || this.loopCount === Player.LoopForever) {
+          if (this.loopCount > 1) {
+            this.loopCount--;
+          }
+
+          this.trigger("loop");
+          this.frame = 0;
+        } else if (this.loopCount == 1) {
+          this.trigger("finish");
+        }
       }
     }
   }
 
-  public on(v: "frame", f: FrameCallback): FrameCallback {
-    this.onframe.push(f);
-    return f;
+  public on(v: CallbackType, f: FrameCallback): Callback {
+    const res = {
+      type: v,
+      callback: f
+    };
+    this.callbacks.push(res);
+
+    return res;
   }
 
-  public off(v: "frame", f: FrameCallback) {
-    this.onframe = this.onframe.filter(c => {
-      return c != f;
+  public off(f: Callback) {
+    this.callbacks = this.callbacks.filter(c => {
+      return c !== f;
     });
   }
+
+  public positiveEdge(curve: string, f: EventCallback) {}
+
+  public negativeEdge(curve: string, f: EventCallback) {}
 
   public underlyingAnimationIsBeingEdited() {
     return typeof this.sourceAnimation.overridenFrame() !== "undefined";
@@ -275,18 +306,28 @@ export class Player {
     };
   }
 
-  private trigger() {
-    this.onframe.forEach(c => {
-      c(this);
+  private trigger(v: CallbackType) {
+    this.callbacks.forEach(cb => {
+      if (cb.type === v) {
+        cb.callback(this);
+      }
     });
   }
 
-  public synthesizeObject(): object {
-    return this.sourceAnimation.synthesizeObjectAtFrame(this.frame);
+  public synthesizeObject(frameOffset: number = 0): object {
+    let realFrame = this.frame + frameOffset;
+    realFrame = Math.min(realFrame, this.sourceAnimation.maximumFrame());
+    realFrame = Math.max(realFrame, this.sourceAnimation.minimumFrame());
+
+    return this.sourceAnimation.synthesizeObjectAtFrame(realFrame);
   }
 
-  public evaluate<T extends object>(output: T) {
-    return this.sourceAnimation.evaluate(this.frame, output);
+  public evaluate<T extends object>(output: T, frameOffset: number = 0) {
+    let realFrame = this.frame + frameOffset;
+    realFrame = Math.min(realFrame, this.sourceAnimation.maximumFrame());
+    realFrame = Math.max(realFrame, this.sourceAnimation.minimumFrame());
+
+    return this.sourceAnimation.evaluate(realFrame, output);
   }
 }
 
@@ -550,6 +591,10 @@ interface Keyframe {
   keyframe: object;
 }
 
+interface SerializedCurves {
+  curves: Curve[];
+}
+
 export default class GraphDriver {
   public static createAnimationWithKeyframes(
     animation: string,
@@ -615,13 +660,23 @@ export default class GraphDriver {
     ]);
   }
 
-  public static loadAnimation(animation: string, curves: any[]): Animation {
+  public static loadAnimation(animation: string, curves: any): Animation {
     const result = new Animation(animation);
-    result.setCurves(
-      curves.map(c => {
-        return Curve.fromJSON(c);
-      })
-    );
+    if (curves.length) {
+      result.setCurves(
+        curves.map((c: any) => {
+          return Curve.fromJSON(c);
+        })
+      );
+    } else {
+      const c = curves as SerializedCurves;
+      result.setCurves(
+        c.curves.map((c: any) => {
+          return Curve.fromJSON(c);
+        })
+      );
+    }
+
     return result;
   }
 }

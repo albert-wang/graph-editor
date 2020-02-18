@@ -280,6 +280,14 @@ export default class Menu {
         this.simpleOption(
           "Clear Repeat Frame",
           event(StateActionKeys.ClearRepeatFrame)
+        ),
+        this.simpleOption(
+          "Set Start Repeat Frame",
+          event(StateActionKeys.EditStartRepeatFrame)
+        ),
+        this.simpleOption(
+          "Clear Start Repeat Frame",
+          event(StateActionKeys.ClearStartRepeatFrame)
         )
       ]),
       this.spacer(),

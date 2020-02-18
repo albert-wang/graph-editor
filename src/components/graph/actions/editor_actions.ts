@@ -154,6 +154,7 @@ export class EditorActions {
         state.inputField.style.setProperty("visibility", "visible");
         state.inputField.focus();
       },
+
       [StateActionKeys.EditPointValue]() {
         state.editingPointValue = true;
 
@@ -175,8 +176,19 @@ export class EditorActions {
       },
 
       [StateActionKeys.EditRepeatFrame]() {
-        state.grid.repeatFrame = state.grid.guidePoint.x;
-        console.log(state.grid.repeatFrame);
+        const p = state.grid.unproject(e.mousePosition);
+
+        state.grid.repeatFrame = Math.round(p.x);
+      },
+
+      [StateActionKeys.ClearStartRepeatFrame]() {
+        state.grid.startRepeatFrame = undefined;
+      },
+
+      [StateActionKeys.EditStartRepeatFrame]() {
+        const p = state.grid.unproject(e.mousePosition);
+
+        state.grid.startRepeatFrame = Math.round(p.x);
       }
     };
   }

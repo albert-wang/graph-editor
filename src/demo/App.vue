@@ -46,6 +46,7 @@ export default class App extends Vue {
     );
 
     this.player = this.animation.player();
+    this.player.loop(4);
     window.anime = anime;
   }
 

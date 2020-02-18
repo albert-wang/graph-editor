@@ -40,6 +40,47 @@ export default class MouseActions {
       e.startingPosition.y < sizes.HorizontalRulerHeight &&
       e.startingPosition.x < state.bounds.x - sizes.PropertiesWidth
     ) {
+      const guidePosition = state.grid.project(
+        vec2(state.grid.guidePoint.x, 0)
+      );
+      if (Math.abs(guidePosition.x - e.previousCallPosition.x) < 10) {
+        state.dispatch(
+          event(StateActionKeys.SetGuideFrame, {}, e.mousePosition)
+        );
+        state.dispatch(
+          event(StateActionKeys.SetGuideValue, {}, e.mousePosition)
+        );
+        return;
+      }
+
+      if (typeof state.grid.startRepeatFrame !== "undefined") {
+        const srfPosition = state.grid.project(
+          vec2(state.grid.startRepeatFrame, 0)
+        );
+        if (Math.abs(srfPosition.x - e.previousCallPosition.x) < 10) {
+          state.dispatch(
+            event(StateActionKeys.EditStartRepeatFrame, {}, e.mousePosition)
+          );
+          state.dispatch(
+            event(StateActionKeys.EditStartRepeatFrame, {}, e.mousePosition)
+          );
+          return;
+        }
+      }
+
+      if (typeof state.grid.repeatFrame !== "undefined") {
+        const rfPosition = state.grid.project(vec2(state.grid.repeatFrame, 0));
+        if (Math.abs(rfPosition.x - e.previousCallPosition.x) < 10) {
+          state.dispatch(
+            event(StateActionKeys.EditRepeatFrame, {}, e.mousePosition)
+          );
+          state.dispatch(
+            event(StateActionKeys.EditRepeatFrame, {}, e.mousePosition)
+          );
+          return;
+        }
+      }
+
       state.dispatch(event(StateActionKeys.SetGuideFrame, {}, e.mousePosition));
       state.dispatch(event(StateActionKeys.SetGuideValue, {}, e.mousePosition));
       return;
