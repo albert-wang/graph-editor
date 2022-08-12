@@ -24,13 +24,13 @@ export default {
       mouseDown: false,
       originalPosition: vec2(0, 0),
       startingPosition: vec2(0, 0),
-      isDragging: false
+      isDragging: false,
     };
 
     const buttonMapping = {
       left: 0,
       middle: 1,
-      right: 2
+      right: 2,
     };
 
     // @ts-ignore
@@ -64,7 +64,7 @@ export default {
               shift: e.shiftKey,
               disableDrag: () => {
                 state.mouseDown = false;
-              }
+              },
             };
 
             binding.value(ev);
@@ -92,7 +92,7 @@ export default {
           shift: e.shiftKey,
           disableDrag: () => {
             state.mouseDown = false;
-          }
+          },
         };
 
         binding.value(ev);
@@ -104,10 +104,7 @@ export default {
     });
 
     el.addEventListener("mousemove", (e: MouseEvent) => {
-      const delta = vec2(
-        e.x - state.originalPosition.x,
-        e.y - state.originalPosition.y
-      );
+      const delta = vec2(e.x - state.originalPosition.x, e.y - state.originalPosition.y);
 
       const original = vec2(state.originalPosition.x, state.originalPosition.y);
       state.originalPosition = vec2(e.x, e.y);
@@ -126,7 +123,7 @@ export default {
           shift: e.shiftKey,
           disableDrag: () => {
             state.mouseDown = false;
-          }
+          },
         };
 
         if (!state.isDragging) {
@@ -137,5 +134,5 @@ export default {
         binding.value(ev);
       }
     });
-  }
+  },
 };

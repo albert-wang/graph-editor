@@ -44,7 +44,7 @@ enum StateActionKeys {
   // Playback
   PlayAtFPS = "play-at-fps",
 
-  PlayOrPause = "play-or-pause"
+  PlayOrPause = "play-or-pause",
 }
 
 export { StateActionKeys };

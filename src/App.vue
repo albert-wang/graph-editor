@@ -50,12 +50,7 @@ export default class App extends Vue {
     canvas.width = bounds.width;
     canvas.height = bounds.height;
 
-    this.graph = new Graph(
-      canvas.getContext("2d")!,
-      canvas,
-      bounds,
-      this.$refs.input
-    );
+    this.graph = new Graph(canvas.getContext("2d")!, canvas, bounds, this.$refs.input);
 
     requestAnimationFrame((t: number) => {
       this.renderGraph(t);

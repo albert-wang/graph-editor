@@ -17,7 +17,7 @@ interface AnimeJSNormalizeParameters {
 
 const standardNormalizeParameters: NormalizeParameters = {
   domain: [0, 1],
-  range: [0, 1]
+  range: [0, 1],
 };
 
 const PlaybackFPS = 60;
@@ -48,7 +48,7 @@ export class Player {
   public play() {
     this.fps = PlaybackFPS;
 
-    requestAnimationFrame(t => {
+    requestAnimationFrame((t) => {
       this.updateWithAnimationFrame(t);
     });
   }
@@ -61,7 +61,7 @@ export class Player {
   private updateWithAnimationFrame(t: number) {
     if (this.lastSeenTime === 0) {
       this.lastSeenTime = t;
-      requestAnimationFrame(t => {
+      requestAnimationFrame((t) => {
         this.updateWithAnimationFrame(t);
       });
       return;
@@ -88,7 +88,7 @@ export class Player {
     this.lastSeenTime = t;
     this.advance(deltaT / 1000);
 
-    requestAnimationFrame(t => {
+    requestAnimationFrame((t) => {
       this.updateWithAnimationFrame(t);
     });
   }
@@ -113,7 +113,7 @@ export class Player {
   }
 
   public off(v: "frame", f: FrameCallback) {
-    this.onframe = this.onframe.filter(c => {
+    this.onframe = this.onframe.filter((c) => {
       return c != f;
     });
   }
@@ -123,11 +123,7 @@ export class Player {
   }
 
   // Fairly specific library transformation function.
-  public animejsProperty(
-    name: string,
-    normalizeParams: AnimeJSNormalizeParameters = {},
-    additional: any = {}
-  ) {
+  public animejsProperty(name: string, normalizeParams: AnimeJSNormalizeParameters = {}, additional: any = {}) {
     const curve = this.sourceAnimation.curve(name);
     if (!curve) {
       console.log("No curve ", name);
@@ -143,10 +139,7 @@ export class Player {
       const tweenFunction = this.normalized(name, { domain: [0, 1] });
       const val = (t: number) => {
         let delay = 0;
-        if (
-          normalizeParams.animationInstance &&
-          this.underlyingAnimationIsBeingEdited()
-        ) {
+        if (normalizeParams.animationInstance && this.underlyingAnimationIsBeingEdited()) {
           const anime = normalizeParams.animationInstance;
           const info = getInstanceAnimationAndTween(anime, val);
           if (info) {
@@ -156,8 +149,7 @@ export class Player {
             // Setup the restart looper iff we haven't done it before
             if (!info.instance.__original_complete_callback) {
               // Save the old complete callback
-              info.instance.__original_complete_callback =
-                info.instance.complete;
+              info.instance.__original_complete_callback = info.instance.complete;
 
               // Setup the new complete callback
               info.instance.complete = () => {
@@ -168,8 +160,7 @@ export class Player {
                   } else {
                     // Otherwise, invoke the original callback.
                     if (info.instance.__original_complete_callback) {
-                      info.instance.complete =
-                        info.instance.__original_complete_callback;
+                      info.instance.complete = info.instance.__original_complete_callback;
                       info.instance.__original_complete_callback(info.instance);
                     }
                   }
@@ -187,10 +178,9 @@ export class Player {
 
     const res = {
       value: value,
-      duration:
-        ((curve.maximumFrame() - curve.minimumFrame()) / PlaybackFPS) * 1000,
+      duration: ((curve.maximumFrame() - curve.minimumFrame()) / PlaybackFPS) * 1000,
       easing: easing,
-      ...additional
+      ...additional,
     };
 
     return res;
@@ -202,10 +192,7 @@ export class Player {
   // Both the range and the domain must either be two element arrays, representing
   // the minimum and maximum value of the range, or empty, which then uses the
   // original range or domain.
-  public normalized(
-    prop: string,
-    normalizeParams: NormalizeParameters = standardNormalizeParameters
-  ) {
+  public normalized(prop: string, normalizeParams: NormalizeParameters = standardNormalizeParameters) {
     return (t: number, delay: number = 0) => {
       // Setup inputs
       let inputDomain: number[] = normalizeParams.domain || [];
@@ -267,8 +254,7 @@ export class Player {
           return v;
         }
 
-        const res =
-          range[0] + ((v - min) / minMaxDelta) * (range[1] - range[0]);
+        const res = range[0] + ((v - min) / minMaxDelta) * (range[1] - range[0]);
 
         return res;
       }
@@ -276,7 +262,7 @@ export class Player {
   }
 
   private trigger() {
-    this.onframe.forEach(c => {
+    this.onframe.forEach((c) => {
       c(this);
     });
   }
@@ -321,19 +307,9 @@ export class Animation {
       maxF = 60;
     }
 
-    const start = new ControlPoint(
-      ControlPointType.Beizer,
-      vec2(minF, 0),
-      vec2(minF + 10, 0),
-      vec2(minF - 10, 0)
-    );
+    const start = new ControlPoint(ControlPointType.Beizer, vec2(minF, 0), vec2(minF + 10, 0), vec2(minF - 10, 0));
 
-    const end = new ControlPoint(
-      ControlPointType.Beizer,
-      vec2(maxF, 1),
-      vec2(maxF + 10, 1),
-      vec2(maxF - 10, 1)
-    );
+    const end = new ControlPoint(ControlPointType.Beizer, vec2(maxF, 1), vec2(maxF + 10, 1), vec2(maxF - 10, 1));
 
     curve.controlPoints.push(start);
     curve.controlPoints.push(end);
@@ -368,7 +344,7 @@ export class Animation {
     }
 
     let output = {};
-    curves.forEach(c => {
+    curves.forEach((c) => {
       // @ts-ignore
       output[c.name] = c.evaluate(f);
     });
@@ -384,7 +360,7 @@ export class Animation {
       curves = this.overrideCurves;
     }
 
-    curves.forEach(c => {
+    curves.forEach((c) => {
       if (output.hasOwnProperty(c.name)) {
         // @ts-ignore
         output[c.name] = c.evaluate(f);
@@ -403,7 +379,7 @@ export class Animation {
       `status-${this.name}`,
       JSON.stringify({
         editing: true,
-        curves: this.curves
+        curves: this.curves,
       })
     );
 
@@ -437,7 +413,7 @@ export class Animation {
 
   public setupEditingChannel() {
     this.editingChannel = new BroadcastChannel(this.name);
-    this.editingChannel.onmessage = ev => {
+    this.editingChannel.onmessage = (ev) => {
       try {
         const e = JSON.parse(ev.data);
         switch (e.event) {
@@ -551,10 +527,7 @@ interface Keyframe {
 }
 
 export default class GraphDriver {
-  public static createAnimationWithKeyframes(
-    animation: string,
-    keyframes: Keyframe[]
-  ): Animation {
+  public static createAnimationWithKeyframes(animation: string, keyframes: Keyframe[]): Animation {
     const result = new Animation(animation);
 
     const sortedFrames = keyframes.sort((a: Keyframe, b: Keyframe) => {
@@ -562,7 +535,7 @@ export default class GraphDriver {
     });
 
     // Get all keys.
-    const allKeys = keyframes.flatMap(v => {
+    const allKeys = keyframes.flatMap((v) => {
       return Object.keys(v.keyframe);
     });
 
@@ -598,27 +571,23 @@ export default class GraphDriver {
     return result;
   }
 
-  public static createAnimationWithEndpoints(
-    animation: string,
-    start: object,
-    end: object
-  ): Animation {
+  public static createAnimationWithEndpoints(animation: string, start: object, end: object): Animation {
     return GraphDriver.createAnimationWithKeyframes(animation, [
       {
         frame: 1,
-        keyframe: start
+        keyframe: start,
       },
       {
         frame: 60,
-        keyframe: end
-      }
+        keyframe: end,
+      },
     ]);
   }
 
   public static loadAnimation(animation: string, curves: any[]): Animation {
     const result = new Animation(animation);
     result.setCurves(
-      curves.map(c => {
+      curves.map((c) => {
         return Curve.fromJSON(c);
       })
     );

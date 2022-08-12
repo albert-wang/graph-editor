@@ -14,12 +14,7 @@ export default class CurvePropertiesRenderer {
     ctx.stroke();
   }
 
-  private static horz(
-    ctx: CanvasRenderingContext2D,
-    y: number,
-    left: number,
-    right: number
-  ) {
+  private static horz(ctx: CanvasRenderingContext2D, y: number, left: number, right: number) {
     ctx.beginPath();
     ctx.moveTo(left, y + 0.5);
     ctx.lineTo(right, y + 0.5);
@@ -69,18 +64,10 @@ export default class CurvePropertiesRenderer {
 
     if (state.selected.isSinglePoint()) {
       ctx.fillStyle = Colors.GuideLine;
-      ctx.fillText(
-        `${pointValues[0].toFixed(3)}`,
-        left + sizes.PropertyColumnOffsets.color,
-        35
-      );
+      ctx.fillText(`${pointValues[0].toFixed(3)}`, left + sizes.PropertyColumnOffsets.color, 35);
 
       ctx.fillStyle = "yellow";
-      ctx.fillText(
-        `${pointValues[1].toFixed(3)}`,
-        left + sizes.PropertyColumnOffsets.value,
-        35
-      );
+      ctx.fillText(`${pointValues[1].toFixed(3)}`, left + sizes.PropertyColumnOffsets.value, 35);
     }
 
     ctx.fillStyle = Colors.BrightText;
@@ -101,12 +88,7 @@ export default class CurvePropertiesRenderer {
       CurvePropertiesRenderer.renderSingleProperty(ctx, frame, left, c, i);
     });
 
-    if (
-      state.editingName ||
-      state.editingValue ||
-      state.editingPointFrame ||
-      state.editingPointValue
-    ) {
+    if (state.editingName || state.editingValue || state.editingPointFrame || state.editingPointValue) {
       state.inputField.style.setProperty("visibility", "visible");
     } else {
       state.inputField.style.setProperty("visibility", "hidden");
@@ -114,12 +96,7 @@ export default class CurvePropertiesRenderer {
     ctx.restore();
   }
 
-  private static rect(
-    ctx: CanvasRenderingContext2D,
-    position: Vec2,
-    size: Vec2,
-    color: string
-  ) {
+  private static rect(ctx: CanvasRenderingContext2D, position: Vec2, size: Vec2, color: string) {
     ctx.save();
     ctx.fillStyle = color;
     ctx.beginPath();
@@ -127,11 +104,7 @@ export default class CurvePropertiesRenderer {
     ctx.restore();
   }
 
-  private static checkbox(
-    ctx: CanvasRenderingContext2D,
-    position: Vec2,
-    filled: boolean
-  ) {
+  private static checkbox(ctx: CanvasRenderingContext2D, position: Vec2, filled: boolean) {
     ctx.save();
     ctx.fillStyle = "white";
     ctx.strokeStyle = "white";
@@ -150,56 +123,26 @@ export default class CurvePropertiesRenderer {
     ctx.restore();
   }
 
-  public static renderSingleProperty(
-    ctx: CanvasRenderingContext2D,
-    frame: number,
-    left: number,
-    c: Curve,
-    i: number
-  ) {
+  public static renderSingleProperty(ctx: CanvasRenderingContext2D, frame: number, left: number, c: Curve, i: number) {
     const heightOffset = i * 19 + 90;
 
-    this.rect(
-      ctx,
-      vec2(left + sizes.PropertyColumnOffsets.color, heightOffset - 6),
-      vec2(10, 10),
-      c.color
-    );
+    this.rect(ctx, vec2(left + sizes.PropertyColumnOffsets.color, heightOffset - 6), vec2(10, 10), c.color);
 
-    ctx.fillText(
-      c.name || "Unnamed Curve",
-      left + sizes.PropertyColumnOffsets.name,
-      heightOffset
-    );
+    ctx.fillText(c.name || "Unnamed Curve", left + sizes.PropertyColumnOffsets.name, heightOffset);
 
     const info = c.curveInformationAt(frame);
     const value = c.evaluate(frame).toFixed(3);
-    if (
-      info.framesFromFirst == 0 ||
-      info.framesFromFirst == info.framesBetween
-    ) {
+    if (info.framesFromFirst == 0 || info.framesFromFirst == info.framesBetween) {
       ctx.fillStyle = "yellow";
     } else {
       ctx.fillStyle = "#00FF00";
     }
 
-    ctx.fillText(
-      `${value}`,
-      left + sizes.PropertyColumnOffsets.value,
-      heightOffset
-    );
+    ctx.fillText(`${value}`, left + sizes.PropertyColumnOffsets.value, heightOffset);
     ctx.fillStyle = Colors.BrightText;
 
-    this.checkbox(
-      ctx,
-      vec2(left + sizes.PropertyColumnOffsets.visible, heightOffset - 3),
-      c.visible
-    );
+    this.checkbox(ctx, vec2(left + sizes.PropertyColumnOffsets.visible, heightOffset - 3), c.visible);
 
-    this.checkbox(
-      ctx,
-      vec2(left + sizes.PropertyColumnOffsets.locked, heightOffset - 3),
-      c.locked
-    );
+    this.checkbox(ctx, vec2(left + sizes.PropertyColumnOffsets.locked, heightOffset - 3), c.locked);
   }
 }

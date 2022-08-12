@@ -1,10 +1,5 @@
 import State from "../state";
-import {
-  Curve,
-  ControlPoint,
-  ControlPointType,
-  isBeizer
-} from "@graph/shared/curves";
+import { Curve, ControlPoint, ControlPointType, isBeizer } from "@graph/shared/curves";
 
 import { exhaustive } from "../util/exhaustive";
 
@@ -32,7 +27,7 @@ export default class CurveRenderer {
       }
     });
 
-    state.curves.curves.forEach(curve => {
+    state.curves.curves.forEach((curve) => {
       if (activeCurve(curve) && curve.visible) {
         ctx.setLineDash([]);
         ctx.globalAlpha = 1;
@@ -100,11 +95,7 @@ export default class CurveRenderer {
     ctx.restore();
   }
 
-  public static renderSingleCurve(
-    state: State,
-    ctx: CanvasRenderingContext2D,
-    curve: Curve
-  ) {
+  public static renderSingleCurve(state: State, ctx: CanvasRenderingContext2D, curve: Curve) {
     const first = curve.controlPoints[0];
     const last = curve.controlPoints[curve.controlPoints.length - 1];
 
@@ -183,12 +174,6 @@ export default class CurveRenderer {
     ctx.lineTo(state.bounds.x, lp.y);
     ctx.stroke();
 
-    this.drawHandles(
-      state,
-      ctx,
-      curve.controlPoints[curve.controlPoints.length - 2],
-      last,
-      null
-    );
+    this.drawHandles(state, ctx, curve.controlPoints[curve.controlPoints.length - 2], last, null);
   }
 }

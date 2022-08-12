@@ -4,10 +4,7 @@ interface AnimeInformation {
   tween: any;
 }
 
-function getInstanceAnimationAndTween(
-  anime: any,
-  targetTween: any
-): AnimeInformation | undefined {
+function getInstanceAnimationAndTween(anime: any, targetTween: any): AnimeInformation | undefined {
   let res = undefined;
   anime.running.forEach((instance: any) => {
     instance.animations.forEach((a: any) => {
@@ -16,7 +13,7 @@ function getInstanceAnimationAndTween(
           res = {
             instance: instance,
             animation: a,
-            tween: t
+            tween: t,
           };
         }
       });

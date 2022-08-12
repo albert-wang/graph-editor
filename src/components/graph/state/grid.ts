@@ -50,17 +50,11 @@ export default class GridState {
 
   // Functions to project and unproject world/pixel coordinates
   public project(p: Vec2): Vec2 {
-    return vec2(
-      (p.x - this.position.x) * this.scale.x,
-      this.parent.bounds.y - (p.y - this.position.y) * this.scale.y
-    );
+    return vec2((p.x - this.position.x) * this.scale.x, this.parent.bounds.y - (p.y - this.position.y) * this.scale.y);
   }
 
   public unproject(p: Vec2): Vec2 {
-    return vec2(
-      p.x / this.scale.x + this.position.x,
-      (this.parent.bounds.y - p.y) / this.scale.y + this.position.y
-    );
+    return vec2(p.x / this.scale.x + this.position.x, (this.parent.bounds.y - p.y) / this.scale.y + this.position.y);
   }
 
   // Horizontal accessors
@@ -79,10 +73,7 @@ export default class GridState {
   }
 
   public get horizontalMinimum() {
-    return (
-      Math.trunc(this.position.x / this.horizontalInterval) *
-      this.horizontalInterval
-    );
+    return Math.trunc(this.position.x / this.horizontalInterval) * this.horizontalInterval;
   }
 
   public get horizontalPixelStart() {
@@ -111,7 +102,7 @@ export default class GridState {
       20,
       50,
       100,
-      200
+      200,
     ];
 
     const scaleFactor = (10 * 5) / this.scale.x;
@@ -138,10 +129,7 @@ export default class GridState {
   }
 
   public get verticalMinimum() {
-    return (
-      Math.trunc(this.position.y / this.verticalInterval) *
-      this.verticalInterval
-    );
+    return Math.trunc(this.position.y / this.verticalInterval) * this.verticalInterval;
   }
 
   public get verticalPixelStart() {
@@ -169,7 +157,7 @@ export default class GridState {
       20,
       50,
       100,
-      200
+      200,
     ];
 
     const scaleFactor = (10 * 5) / this.scale.y;

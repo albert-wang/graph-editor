@@ -7,6 +7,6 @@ export default {
     name: 25,
     value: 200,
     visible: 300,
-    locked: 330
-  }
+    locked: 330,
+  },
 };

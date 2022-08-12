@@ -73,10 +73,7 @@ export class EditorActions {
             let point: ControlPoint | null = null;
             if (info.framesFromFirst === 0 && info.points[0]) {
               point = info.points[0];
-            } else if (
-              info.framesFromFirst === info.framesBetween &&
-              info.points[1]
-            ) {
+            } else if (info.framesFromFirst === info.framesBetween && info.points[1]) {
               point = info.points[1];
             }
 
@@ -103,11 +100,7 @@ export class EditorActions {
             const value = parseFloat(state.inputField.value);
 
             state.pushUndoState();
-            state.curves.modifyPoint(
-              state.selected,
-              vec2(value, 0),
-              vec2(1, 0)
-            );
+            state.curves.modifyPoint(state.selected, vec2(value, 0), vec2(1, 0));
           } catch (e) {
             // Again, unparsable
           }
@@ -118,11 +111,7 @@ export class EditorActions {
             const value = parseFloat(state.inputField.value);
 
             state.pushUndoState();
-            state.curves.modifyPoint(
-              state.selected,
-              vec2(0, value),
-              vec2(0, 1)
-            );
+            state.curves.modifyPoint(state.selected, vec2(0, value), vec2(0, 1));
           } catch (e) {
             // Again, unparsable
           }
@@ -177,7 +166,7 @@ export class EditorActions {
       [StateActionKeys.EditRepeatFrame]() {
         state.grid.repeatFrame = state.grid.guidePoint.x;
         console.log(state.grid.repeatFrame);
-      }
+      },
     };
   }
 }

@@ -1,19 +1,6 @@
-import {
-  vec2,
-  Vec2,
-  add,
-  sub,
-  mul,
-  pointInBox,
-  negate
-} from "@graph/shared/math";
+import { vec2, Vec2, add, sub, mul, pointInBox, negate } from "@graph/shared/math";
 
-import {
-  Curve,
-  ControlPoint,
-  ControlPointType,
-  isBeizer
-} from "@graph/shared/curves";
+import { Curve, ControlPoint, ControlPointType, isBeizer } from "@graph/shared/curves";
 
 import State from ".";
 
@@ -25,7 +12,7 @@ import { StateEvent, event, StateActionKeys } from "../actions";
 export enum SelectedPointType {
   Point = 0,
   Forward = 1,
-  Backward = 2
+  Backward = 2,
 }
 
 interface SelectionHistoryEntry {
@@ -34,11 +21,7 @@ interface SelectionHistoryEntry {
   handle: SelectedPointType;
 }
 
-type SelectedForeachCallback = (
-  c: Curve,
-  cp: ControlPoint | null,
-  idx: number
-) => void;
+type SelectedForeachCallback = (c: Curve, cp: ControlPoint | null, idx: number) => void;
 
 export class SelectedPoint {
   curve: Curve[] = [];
@@ -54,7 +37,7 @@ export class SelectedPoint {
         this.pointHistory.push({
           curve: c,
           point: p,
-          handle: this.handle
+          handle: this.handle,
         });
       }
     });
@@ -90,11 +73,11 @@ export class SelectedPoint {
   }
 
   public hasCurve(t: Curve): boolean {
-    return this.curve.find(c => c === t) !== undefined;
+    return this.curve.find((c) => c === t) !== undefined;
   }
 
   public hasPoint(t: ControlPoint) {
-    return this.point.find(p => p === t) !== undefined;
+    return this.point.find((p) => p === t) !== undefined;
   }
 }
 
@@ -136,21 +119,18 @@ export default class Curves {
           candidatePoints.push({
             curve: curve,
             point: point,
-            handle: SelectedPointType.Point
+            handle: SelectedPointType.Point,
           });
         }
 
         // Can only select handles if the point they belong to is already selected.
         if (current.hasPoint(point)) {
           // Select the forward handle iff this is a beizer curve
-          if (
-            isBeizer(point.type) &&
-            squaredDistance(query, point.forwardHandle) < SELECTION_DISTANCE
-          ) {
+          if (isBeizer(point.type) && squaredDistance(query, point.forwardHandle) < SELECTION_DISTANCE) {
             candidatePoints.push({
               curve: curve,
               point: point,
-              handle: SelectedPointType.Forward
+              handle: SelectedPointType.Forward,
             });
           }
 
@@ -164,7 +144,7 @@ export default class Curves {
             candidatePoints.push({
               curve: curve,
               point: point,
-              handle: SelectedPointType.Backward
+              handle: SelectedPointType.Backward,
             });
           }
         }
@@ -174,22 +154,16 @@ export default class Curves {
     // Only use the historical discrimination method iff the clicks are
     // close enough to be ambiguous and there is history
     const useHistory =
-      current.pointHistory.length != 0 &&
-      squaredDistance(current.lastSelectedPointQuery, query) <
-        SELECTION_DISTANCE;
+      current.pointHistory.length != 0 && squaredDistance(current.lastSelectedPointQuery, query) < SELECTION_DISTANCE;
 
     if (useHistory) {
       // Consult the selection history and select the least recent.
       // Compute the historical rank
-      const rankedPoints = candidatePoints.map(p => {
+      const rankedPoints = candidatePoints.map((p) => {
         let index = -1;
         for (let i = current.pointHistory.length - 1; i >= 0; --i) {
           const cp = current.pointHistory[i];
-          if (
-            cp.curve == p.curve &&
-            cp.handle == p.handle &&
-            cp.point == p.point
-          ) {
+          if (cp.curve == p.curve && cp.handle == p.handle && cp.point == p.point) {
             index = i;
             break;
           }
@@ -199,7 +173,7 @@ export default class Curves {
           curve: p.curve,
           point: p.point,
           handle: p.handle,
-          rank: index
+          rank: index,
         };
       });
 
@@ -215,7 +189,7 @@ export default class Curves {
       }
     } else if (candidatePoints.length > 0) {
       // Prefer active curve, handles.
-      const rankedPoints = candidatePoints.map(p => {
+      const rankedPoints = candidatePoints.map((p) => {
         let rank = 0;
         if (current.hasCurve(p.curve)) {
           rank -= 2;
@@ -229,7 +203,7 @@ export default class Curves {
           curve: p.curve,
           point: p.point,
           handle: p.handle,
-          rank: rank
+          rank: rank,
         };
       });
 
@@ -258,12 +232,7 @@ export default class Curves {
     const delta = vec2(info.framesBetween / 4, 0);
     const prototype = info.points[0] || info.points[1];
 
-    const res = new ControlPoint(
-      prototype!.type,
-      position,
-      add(position, delta),
-      sub(position, delta)
-    );
+    const res = new ControlPoint(prototype!.type, position, add(position, delta), sub(position, delta));
 
     c.controlPoints.push(res);
     this.sortCurve(c);
@@ -330,10 +299,7 @@ export default class Curves {
             }
 
             const scale = forwardDiff.x / negated.x;
-            const mirror = add(
-              point.position,
-              mul(negated, vec2(scale, scale))
-            );
+            const mirror = add(point.position, mul(negated, vec2(scale, scale)));
 
             point.forwardHandle = mirror;
           }
@@ -356,10 +322,7 @@ export default class Curves {
             }
 
             const scale = backwardDiff.x / negated.x;
-            const mirror = add(
-              point.position,
-              mul(negated, vec2(scale, scale))
-            );
+            const mirror = add(point.position, mul(negated, vec2(scale, scale)));
 
             point.backwardsHandle = mirror;
           }
@@ -388,16 +351,8 @@ export default class Curves {
   public propertiesClick(query: Vec2): StateEvent {
     const offsets = sizes.PropertyColumnOffsets;
     const left = this.parent.bounds.x - sizes.PropertiesWidth;
-    const selectedProperty = function(
-      height: number,
-      offset: number,
-      nextOffset: number
-    ) {
-      return pointInBox(
-        query,
-        vec2(left + offset, height - 10),
-        vec2(nextOffset - offset - 12, 20)
-      );
+    const selectedProperty = function (height: number, offset: number, nextOffset: number) {
+      return pointInBox(query, vec2(left + offset, height - 10), vec2(nextOffset - offset - 12, 20));
     };
 
     const setInputPosition = (x: number, y: number) => {
@@ -479,14 +434,9 @@ export default class Curves {
       }
 
       if (selectedProperty(heightOffset, offsets.value, offsets.visible)) {
-        const info = this.curves[i].curveInformationAt(
-          this.parent.grid.guidePoint.x
-        );
+        const info = this.curves[i].curveInformationAt(this.parent.grid.guidePoint.x);
 
-        if (
-          info.framesFromFirst == 0 ||
-          info.framesFromFirst == info.framesBetween
-        ) {
+        if (info.framesFromFirst == 0 || info.framesFromFirst == info.framesBetween) {
           this.parent.selected.selectPoint(selection);
           this.parent.inputField.style.setProperty("color", "yellow");
 
@@ -502,9 +452,7 @@ export default class Curves {
         return event(StateActionKeys.ToggleVisible);
       }
 
-      if (
-        selectedProperty(heightOffset, offsets.locked, sizes.PropertiesWidth)
-      ) {
+      if (selectedProperty(heightOffset, offsets.locked, sizes.PropertiesWidth)) {
         this.parent.selected.selectPoint(selection);
 
         return event(StateActionKeys.ToggleLocked);

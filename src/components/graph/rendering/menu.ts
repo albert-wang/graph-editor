@@ -47,7 +47,7 @@ export default class MenuRenderer {
     ctx.globalAlpha = 1;
     ctx.strokeRect(position.x - 1, position.y - 1, size.x + 2, size.y + 6 + 2);
 
-    options.forEach(v => {
+    options.forEach((v) => {
       ctx.fillStyle = Colors.BrightText;
       ctx.strokeStyle = "white";
       ctx.font = "12px arial";
@@ -62,12 +62,7 @@ export default class MenuRenderer {
           if (path.indexOf(v) !== -1) {
             ctx.save();
             ctx.fillStyle = Colors.HighlightedItem;
-            ctx.fillRect(
-              position.x,
-              position.y + v.computedOffset - 10,
-              size.x,
-              21
-            );
+            ctx.fillRect(position.x, position.y + v.computedOffset - 10, size.x, 21);
             ctx.restore();
 
             if (v.children.length) {
@@ -84,50 +79,28 @@ export default class MenuRenderer {
               }
             }
           }
-          ctx.fillText(
-            v.label,
-            position.x + 10,
-            position.y + v.computedOffset + 2
-          );
+          ctx.fillText(v.label, position.x + 10, position.y + v.computedOffset + 2);
 
           if (v.children.length) {
             const metrics = ctx.measureText("⯈");
-            ctx.fillText(
-              "⯈",
-              position.x + size.x - metrics.width - 2,
-              position.y + v.computedOffset + 2
-            );
+            ctx.fillText("⯈", position.x + size.x - metrics.width - 2, position.y + v.computedOffset + 2);
           } else if (v.shortcut) {
             const metrics = ctx.measureText(v.shortcut);
-            ctx.fillText(
-              v.shortcut,
-              position.x + size.x - metrics.width - 2,
-              position.y + v.computedOffset + 2
-            );
+            ctx.fillText(v.shortcut, position.x + size.x - metrics.width - 2, position.y + v.computedOffset + 2);
           }
 
           break;
         case MenuOptionType.Header: {
           ctx.fillStyle = Colors.HeaderColor;
           const metrics = ctx.measureText(v.label);
-          ctx.fillText(
-            v.label,
-            position.x + size.x - metrics.width - 2,
-            position.y + v.computedOffset + 2
-          );
+          ctx.fillText(v.label, position.x + size.x - metrics.width - 2, position.y + v.computedOffset + 2);
           break;
         }
         case MenuOptionType.Spacer:
           ctx.strokeStyle = Colors.SpacerColor;
           ctx.beginPath();
-          ctx.moveTo(
-            position.x,
-            Math.round(position.y + v.computedOffset) - 9 + 0.5
-          );
-          ctx.lineTo(
-            position.x + size.x,
-            Math.round(position.y + v.computedOffset) - 9 + 0.5
-          );
+          ctx.moveTo(position.x, Math.round(position.y + v.computedOffset) - 9 + 0.5);
+          ctx.lineTo(position.x + size.x, Math.round(position.y + v.computedOffset) - 9 + 0.5);
           ctx.stroke();
           break;
       }

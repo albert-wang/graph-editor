@@ -37,9 +37,9 @@ class Graph {
           x: -10,
           y: -10,
           w: 250,
-          h: 20
-        }
-      }
+          h: 20,
+        },
+      },
     });
 
     this.lastKnownMousePosition = vec2(0, 0);
@@ -95,7 +95,7 @@ class Graph {
   public close() {
     this.broadcastChannel.postMessage(
       JSON.stringify({
-        event: "close"
+        event: "close",
       })
     );
     window.localStorage.removeItem(`status-${this.animationName}`);
@@ -109,7 +109,7 @@ class Graph {
 
     let res = {
       editing: false,
-      curves: [] as any[]
+      curves: [] as any[],
     };
 
     try {
@@ -141,8 +141,8 @@ class Graph {
         event: "state",
         data: {
           frame: this.state.grid.guidePoint.x,
-          curves: this.state.curves.curves
-        }
+          curves: this.state.curves.curves,
+        },
       })
     );
   }

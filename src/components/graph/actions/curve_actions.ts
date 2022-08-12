@@ -3,41 +3,27 @@ import { StateActionKeys } from "./action_keys";
 import { StateEvent } from ".";
 import { vec2, sub, mul, add } from "@graph/shared/math";
 import { SelectedPoint } from "../state/curves";
-import {
-  ControlPointType,
-  isBeizer,
-  Curve,
-  ControlPoint
-} from "@graph/shared/curves";
+import { ControlPointType, isBeizer, Curve, ControlPoint } from "@graph/shared/curves";
 
 export class CurveActions {
   public static events(e: StateEvent, state: State) {
     return {
       [StateActionKeys.NormalizePointFrames]() {
         state.curves.curves.forEach((c: Curve) => {
-          c.controlPoints.forEach(p => {
+          c.controlPoints.forEach((p) => {
             p.position.x = Math.round(p.position.x);
           });
         });
       },
       [StateActionKeys.MoveCurrentSelection]() {
         state.pushUndoState();
-        const amount = sub(
-          state.grid.unproject(vec2(10, 10)),
-          state.grid.unproject(vec2(0, 0))
-        );
+        const amount = sub(state.grid.unproject(vec2(10, 10)), state.grid.unproject(vec2(0, 0)));
 
         if (Math.abs(amount.x * e.data.scale.x) <= 1) {
           amount.x = 1 / Math.abs(e.data.scale.x);
         }
 
-        state.curves.modifyPoint(
-          state.selected,
-          vec2(0, 0),
-          vec2(0, 0),
-          amount,
-          e.data.scale
-        );
+        state.curves.modifyPoint(state.selected, vec2(0, 0), vec2(0, 0), amount, e.data.scale);
       },
       [StateActionKeys.ModifyPoint]() {
         const selection = e.data.selection;
@@ -46,19 +32,13 @@ export class CurveActions {
         const move = e.data.move || vec2(0, 0);
         const moveScale = e.data.moveScale || vec2(0, 0);
 
-        state.curves.modifyPoint(
-          selection,
-          moveTo,
-          moveToScale,
-          move,
-          moveScale
-        );
+        state.curves.modifyPoint(selection, moveTo, moveToScale, move, moveScale);
       },
       [StateActionKeys.InsertKeyframeAllCurves]() {
         state.pushUndoState();
 
         const point = new SelectedPoint();
-        state.curves.curves.forEach(c => {
+        state.curves.curves.forEach((c) => {
           if (c.visible && !c.locked) {
             point.curve.push(c);
             point.point.push(state.curves.addPoint(c, state.grid.guidePoint.x));
@@ -77,10 +57,7 @@ export class CurveActions {
 
         const newSelection = new SelectedPoint();
         state.selected.foreach((curve: Curve) => {
-          const insertedPoint = state.curves.addPoint(
-            curve,
-            state.grid.guidePoint.x
-          );
+          const insertedPoint = state.curves.addPoint(curve, state.grid.guidePoint.x);
           newSelection.curve.push(curve);
           newSelection.point.push(insertedPoint);
         });
@@ -169,14 +146,8 @@ export class CurveActions {
           }
 
           const distance = sub(next.position, current.position);
-          const cp1 = add(
-            current.position,
-            mul(vec2(first[0], first[1]), distance)
-          );
-          const cp2 = add(
-            current.position,
-            mul(vec2(second[0], second[1]), distance)
-          );
+          const cp1 = add(current.position, mul(vec2(first[0], first[1]), distance));
+          const cp2 = add(current.position, mul(vec2(second[0], second[1]), distance));
 
           current.forwardHandle = cp1;
           next.backwardsHandle = cp2;
@@ -195,21 +166,13 @@ export class CurveActions {
       [StateActionKeys.SnapFrame]() {
         state.pushUndoState();
 
-        state.curves.modifyPoint(
-          state.selected,
-          state.grid.guidePoint,
-          vec2(1, 0)
-        );
+        state.curves.modifyPoint(state.selected, state.grid.guidePoint, vec2(1, 0));
       },
 
       [StateActionKeys.SnapValue]() {
         state.pushUndoState();
 
-        state.curves.modifyPoint(
-          state.selected,
-          state.grid.guidePoint,
-          vec2(0, 1)
-        );
+        state.curves.modifyPoint(state.selected, state.grid.guidePoint, vec2(0, 1));
       },
       [StateActionKeys.ToggleVisible]() {
         state.pushUndoState();
@@ -253,7 +216,7 @@ export class CurveActions {
         }
 
         state.selected.selectPoint(newSelection);
-      }
+      },
     };
   }
 }

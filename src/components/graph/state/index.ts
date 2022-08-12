@@ -62,7 +62,7 @@ export default class State {
       first: vec2(0, 0),
       second: vec2(0, 0),
       dragPoint: vec2(0, 0),
-      state: BoxState.Inactive
+      state: BoxState.Inactive,
     };
 
     this.ctx = gs.ctx;
@@ -83,47 +83,17 @@ export default class State {
     this.curves = new Curves(this);
     const x = new Curve("X");
     x.controlPoints = [
-      new ControlPoint(
-        ControlPointType.Beizer,
-        vec2(1, 0),
-        vec2(11, 0),
-        vec2(-9, 0)
-      ),
-      new ControlPoint(
-        ControlPointType.BeizerContinuous,
-        vec2(60, 10),
-        vec2(70, 10),
-        vec2(50, 10)
-      ),
-      new ControlPoint(
-        ControlPointType.Linear,
-        vec2(80, 7),
-        vec2(90, 10),
-        vec2(70, 10)
-      )
+      new ControlPoint(ControlPointType.Beizer, vec2(1, 0), vec2(11, 0), vec2(-9, 0)),
+      new ControlPoint(ControlPointType.BeizerContinuous, vec2(60, 10), vec2(70, 10), vec2(50, 10)),
+      new ControlPoint(ControlPointType.Linear, vec2(80, 7), vec2(90, 10), vec2(70, 10)),
     ];
     this.curves.addCurve(x);
 
     const y = new Curve("Y");
     y.controlPoints = [
-      new ControlPoint(
-        ControlPointType.Beizer,
-        vec2(1, -5),
-        vec2(11, -5),
-        vec2(-9, -5)
-      ),
-      new ControlPoint(
-        ControlPointType.BeizerContinuous,
-        vec2(60, 5),
-        vec2(70, 5),
-        vec2(50, 5)
-      ),
-      new ControlPoint(
-        ControlPointType.Linear,
-        vec2(80, 7),
-        vec2(90, 10),
-        vec2(70, 10)
-      )
+      new ControlPoint(ControlPointType.Beizer, vec2(1, -5), vec2(11, -5), vec2(-9, -5)),
+      new ControlPoint(ControlPointType.BeizerContinuous, vec2(60, 5), vec2(70, 5), vec2(50, 5)),
+      new ControlPoint(ControlPointType.Linear, vec2(80, 7), vec2(90, 10), vec2(70, 10)),
     ];
     this.curves.addCurve(y);
 
@@ -146,12 +116,7 @@ export default class State {
   }
 
   public isEditing() {
-    return (
-      this.editingName ||
-      this.editingPointFrame ||
-      this.editingPointValue ||
-      this.editingValue
-    );
+    return this.editingName || this.editingPointFrame || this.editingPointValue || this.editingValue;
   }
 
   // Playback functionality.
@@ -172,14 +137,10 @@ export default class State {
     this.accumulatedTime += dt;
     while (this.accumulatedTime >= 1 / this.playbackFPS) {
       this.accumulatedTime -= 1 / this.playbackFPS;
-      this.grid.setGuidePoint(
-        vec2(this.grid.guidePoint.x + 1, this.grid.guidePoint.y)
-      );
+      this.grid.setGuidePoint(vec2(this.grid.guidePoint.x + 1, this.grid.guidePoint.y));
 
       const repeatFrame =
-        typeof this.grid.repeatFrame === "undefined"
-          ? this.curves.maximumFrame()
-          : this.grid.repeatFrame;
+        typeof this.grid.repeatFrame === "undefined" ? this.curves.maximumFrame() : this.grid.repeatFrame;
 
       if (this.grid.guidePoint.x > repeatFrame) {
         this.grid.guidePoint.x = this.curves.minimumFrame();
@@ -211,7 +172,7 @@ export default class State {
     const stateCopy = JSON.parse(JSON.stringify(this.curves.curves));
     const curvesState = this.undoStack.pop();
     if (curvesState) {
-      this.curves.curves = curvesState.map(c => {
+      this.curves.curves = curvesState.map((c) => {
         const transformed = Curve.fromJSON(c);
 
         this.selected.foreach((curve: Curve, _, i: number) => {
@@ -232,7 +193,7 @@ export default class State {
     const stateCopy = JSON.parse(JSON.stringify(this.curves.curves));
     const curvesState = this.redoStack.pop();
     if (curvesState) {
-      this.curves.curves = curvesState.map(c => {
+      this.curves.curves = curvesState.map((c) => {
         const transformed = Curve.fromJSON(c);
         this.selected.foreach((curve: Curve, _, i: number) => {
           if (curve.id === c.id) {

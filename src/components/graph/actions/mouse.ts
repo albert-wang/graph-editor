@@ -25,9 +25,7 @@ export default class MouseActions {
       state.dispatch(event(StateActionKeys.SubmitEdit, {}, e.mousePosition));
     }
 
-    state.dispatch(
-      event(StateActionKeys.MoveScreen, {}, vec2(e.delta.x, e.delta.y))
-    );
+    state.dispatch(event(StateActionKeys.MoveScreen, {}, vec2(e.delta.x, e.delta.y)));
   }
 
   public static leftDrag(e: DragEvent, state: State) {
@@ -103,7 +101,7 @@ export default class MouseActions {
             event(StateActionKeys.ModifyPoint, {
               selection: state.selected,
               moveTo: point,
-              moveToScale: scale
+              moveToScale: scale,
             })
           );
         }
@@ -131,7 +129,7 @@ export default class MouseActions {
           event(StateActionKeys.ModifyPoint, {
             selection: state.selected,
             move: delta,
-            moveScale: vec2(1, 1)
+            moveScale: vec2(1, 1),
           })
         );
 

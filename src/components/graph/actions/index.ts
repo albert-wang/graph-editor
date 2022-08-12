@@ -13,15 +13,11 @@ interface StateEvent {
   data: any;
 }
 
-function event(
-  e: string,
-  data: any | undefined = undefined,
-  mp: Vec2 | undefined = undefined
-): StateEvent {
+function event(e: string, data: any | undefined = undefined, mp: Vec2 | undefined = undefined): StateEvent {
   return {
     event: e,
     mousePosition: mp || vec2(0, 0),
-    data: data || {}
+    data: data || {},
   };
 }
 
@@ -32,13 +28,13 @@ class StateActions {
       ...CurveActions.events(event, state),
 
       [StateActionKeys.DebugShowCurves]() {
-        state.curves.curves.forEach(curve => {
+        state.curves.curves.forEach((curve) => {
           console.table({
-            name: curve.name
+            name: curve.name,
           });
 
           console.table(
-            curve.controlPoints.map(c => {
+            curve.controlPoints.map((c) => {
               return {
                 type: ControlPointType[c.type],
                 "back.x": c.backwardsHandle.x,
@@ -46,7 +42,7 @@ class StateActions {
                 "pos.x": c.position.x,
                 "pos.y": c.position.y,
                 "for.x": c.forwardHandle.x,
-                "for.y": c.forwardHandle.y
+                "for.y": c.forwardHandle.y,
               };
             })
           );
@@ -64,7 +60,7 @@ class StateActions {
         } else {
           state.playbackFPS = state.previousPlaybackFPS;
         }
-      }
+      },
     };
 
     // @ts-ignore

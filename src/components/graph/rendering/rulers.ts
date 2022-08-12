@@ -87,11 +87,7 @@ class VerticalRulerRenderer {
 
       const metrics = ctx.measureText(txt);
 
-      ctx.fillText(
-        txt,
-        15 - metrics.width / 2,
-        state.bounds.y - (y + pixelStart - 5)
-      );
+      ctx.fillText(txt, 15 - metrics.width / 2, state.bounds.y - (y + pixelStart - 5));
       label += interval;
     }
 
@@ -106,7 +102,4 @@ class VerticalRulerRenderer {
   }
 }
 
-export {
-  HorizontalRulerRenderer as HorizontalRuler,
-  VerticalRulerRenderer as VerticalRuler
-};
+export { HorizontalRulerRenderer as HorizontalRuler, VerticalRulerRenderer as VerticalRuler };

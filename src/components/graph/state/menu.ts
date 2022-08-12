@@ -1,12 +1,6 @@
 import State from "../state";
 import { StateActionKeys, StateEvent, event } from "../actions";
-import {
-  Vec2,
-  vec2,
-  add,
-  pointInBox,
-  pointInTriangle
-} from "@graph/shared/math";
+import { Vec2, vec2, add, pointInBox, pointInTriangle } from "@graph/shared/math";
 import KeyboardActions from "../actions/keyboard";
 import Sizes from "../rendering/sizes";
 import { ControlPointType } from "@graph/shared/curves";
@@ -14,7 +8,7 @@ import { ControlPointType } from "@graph/shared/curves";
 export enum MenuOptionType {
   Default = 0,
   Header = 1,
-  Spacer = 2
+  Spacer = 2,
 }
 
 export interface MenuOption {
@@ -59,7 +53,7 @@ export default class Menu {
   ): MenuOption {
     const keys = KeyboardActions.shortcuts;
     let shortcut = "";
-    Object.keys(keys).forEach(v => {
+    Object.keys(keys).forEach((v) => {
       if (keys[v].event === action.event) {
         shortcut = v;
       }
@@ -72,7 +66,7 @@ export default class Menu {
       children: children,
       computedOffset: 0,
       enabled: enabled,
-      shortcut: shortcut
+      shortcut: shortcut,
     };
   }
 
@@ -84,7 +78,7 @@ export default class Menu {
       shortcut: "",
       children: [],
       computedOffset: 0,
-      enabled: true
+      enabled: true,
     };
   }
 
@@ -96,7 +90,7 @@ export default class Menu {
       shortcut: "",
       children: [],
       computedOffset: 0,
-      enabled: true
+      enabled: true,
     };
   }
 
@@ -147,9 +141,7 @@ export default class Menu {
         if (
           // Root selection.
           // Selected option has no children, so this is a valid selection
-          (this.optionPath.length == 1 &&
-            this.optionPath[0] == selected &&
-            this.optionPath[0].children.length == 0) ||
+          (this.optionPath.length == 1 && this.optionPath[0] == selected && this.optionPath[0].children.length == 0) ||
           // Child selection.
           this.optionPath.length == 2
         ) {
@@ -191,10 +183,7 @@ export default class Menu {
   public setPosition(v: Vec2) {
     this.position = vec2(v.x, v.y);
     this.mousePositionOnOpen = vec2(v.x, v.y);
-    if (
-      this.position.x + Sizes.MenuWidth * 2 + Sizes.PropertiesWidth >
-      this.parent.bounds.x
-    ) {
+    if (this.position.x + Sizes.MenuWidth * 2 + Sizes.PropertiesWidth > this.parent.bounds.x) {
       this.position.x -= Sizes.MenuWidth;
     }
   }
@@ -219,42 +208,15 @@ export default class Menu {
       this.simpleOption("Play", noop, true, [
         this.header("Playback Speed"),
         this.spacer(),
-        this.simpleOption(
-          "Play 6fps",
-          event(StateActionKeys.PlayAtFPS, { fps: 6 })
-        ),
-        this.simpleOption(
-          "Play 12fps",
-          event(StateActionKeys.PlayAtFPS, { fps: 12 })
-        ),
-        this.simpleOption(
-          "Play 24fps",
-          event(StateActionKeys.PlayAtFPS, { fps: 24 })
-        ),
-        this.simpleOption(
-          "Play 30fps",
-          event(StateActionKeys.PlayAtFPS, { fps: 30 })
-        ),
-        this.simpleOption(
-          "Play 60fps",
-          event(StateActionKeys.PlayAtFPS, { fps: 60 })
-        ),
-        this.simpleOption(
-          "Play 90fps",
-          event(StateActionKeys.PlayAtFPS, { fps: 90 })
-        ),
-        this.simpleOption(
-          "Play 120fps",
-          event(StateActionKeys.PlayAtFPS, { fps: 120 })
-        ),
-        this.simpleOption(
-          "Play 144fps",
-          event(StateActionKeys.PlayAtFPS, { fps: 144 })
-        ),
-        this.simpleOption(
-          "Play 240fps",
-          event(StateActionKeys.PlayAtFPS, { fps: 240 })
-        )
+        this.simpleOption("Play 6fps", event(StateActionKeys.PlayAtFPS, { fps: 6 })),
+        this.simpleOption("Play 12fps", event(StateActionKeys.PlayAtFPS, { fps: 12 })),
+        this.simpleOption("Play 24fps", event(StateActionKeys.PlayAtFPS, { fps: 24 })),
+        this.simpleOption("Play 30fps", event(StateActionKeys.PlayAtFPS, { fps: 30 })),
+        this.simpleOption("Play 60fps", event(StateActionKeys.PlayAtFPS, { fps: 60 })),
+        this.simpleOption("Play 90fps", event(StateActionKeys.PlayAtFPS, { fps: 90 })),
+        this.simpleOption("Play 120fps", event(StateActionKeys.PlayAtFPS, { fps: 120 })),
+        this.simpleOption("Play 144fps", event(StateActionKeys.PlayAtFPS, { fps: 144 })),
+        this.simpleOption("Play 240fps", event(StateActionKeys.PlayAtFPS, { fps: 240 })),
       ]),
       this.spacer(),
       this.simpleOption("Guides", noop, true, [
@@ -265,22 +227,10 @@ export default class Menu {
           event(StateActionKeys.SetGuideFrameToSelectedPointFrame),
           hasSelectedPoint
         ),
-        this.simpleOption(
-          "Move Frame Guide",
-          event(StateActionKeys.SetGuideFrame)
-        ),
-        this.simpleOption(
-          "Move Value Guide",
-          event(StateActionKeys.SetGuideValue)
-        ),
-        this.simpleOption(
-          "Set Repeat Frame",
-          event(StateActionKeys.EditRepeatFrame)
-        ),
-        this.simpleOption(
-          "Clear Repeat Frame",
-          event(StateActionKeys.ClearRepeatFrame)
-        )
+        this.simpleOption("Move Frame Guide", event(StateActionKeys.SetGuideFrame)),
+        this.simpleOption("Move Value Guide", event(StateActionKeys.SetGuideValue)),
+        this.simpleOption("Set Repeat Frame", event(StateActionKeys.EditRepeatFrame)),
+        this.simpleOption("Clear Repeat Frame", event(StateActionKeys.ClearRepeatFrame)),
       ]),
       this.spacer(),
       this.simpleOption("Interpolation", noop, hasSelectedPoint, [
@@ -289,58 +239,49 @@ export default class Menu {
         this.simpleOption(
           "Linear",
           event(StateActionKeys.ChangeInterpolationType, {
-            type: ControlPointType.Linear
+            type: ControlPointType.Linear,
           })
         ),
         this.simpleOption(
           "Flat",
           event(StateActionKeys.ChangeInterpolationType, {
-            type: ControlPointType.LinearFlat
+            type: ControlPointType.LinearFlat,
           })
         ),
         this.simpleOption(
           "Beizer",
           event(StateActionKeys.ChangeInterpolationType, {
-            type: ControlPointType.Beizer
+            type: ControlPointType.Beizer,
           })
         ),
         this.simpleOption(
           "Continuous Beizer",
           event(StateActionKeys.ChangeInterpolationType, {
-            type: ControlPointType.BeizerContinuous
+            type: ControlPointType.BeizerContinuous,
           })
         ),
         this.spacer(),
-        ...this.easings()
+        ...this.easings(),
       ]),
       this.simpleOption("Handles", noop, hasSelectedPoint, [
         this.header("Handles"),
         this.spacer(),
         this.simpleOption("Mirror handles (value)", noop),
-        this.simpleOption("Mirror handles (frame)", noop)
+        this.simpleOption("Mirror handles (frame)", noop),
       ]),
-      this.simpleOption(
-        "Insert keyframe",
-        event(StateActionKeys.InsertKeyframe)
-      ),
-      this.simpleOption(
-        "Insert keyframe in all curves",
-        event(StateActionKeys.InsertKeyframeAllCurves)
-      ),
+      this.simpleOption("Insert keyframe", event(StateActionKeys.InsertKeyframe)),
+      this.simpleOption("Insert keyframe in all curves", event(StateActionKeys.InsertKeyframeAllCurves)),
       this.simpleOption("Snap", noop, hasSelectedPoint, [
         this.header("Snap ..."),
         this.spacer(),
-        this.simpleOption(
-          "To selected frame",
-          event(StateActionKeys.SnapFrame)
-        ),
-        this.simpleOption("Value to guide", event(StateActionKeys.SnapValue))
-      ])
+        this.simpleOption("To selected frame", event(StateActionKeys.SnapFrame)),
+        this.simpleOption("Value to guide", event(StateActionKeys.SnapValue)),
+      ]),
     ];
 
     this.computeOffsetForOptions(options);
     this.setOptionTree({
-      options: options
+      options: options,
     });
   }
 
@@ -350,7 +291,7 @@ export default class Menu {
         name,
         event(StateActionKeys.UseFixedControlPoints, {
           first: [values[0], values[1]],
-          second: [values[2], values[3]]
+          second: [values[2], values[3]],
         })
       );
     };
@@ -360,7 +301,7 @@ export default class Menu {
       easing("Smoothstep (2)", [0.35, 0, 0.65, 1]),
       easing("Sine in", [0.47, 0, 0.745, 0.715]),
       easing("Sine out", [0.39, 0.575, 0.565, 1]),
-      easing("Sine in-out", [0.445, 0.05, 0.55, 0.95])
+      easing("Sine in-out", [0.445, 0.05, 0.55, 0.95]),
     ];
   }
 
@@ -387,22 +328,19 @@ export default class Menu {
         childSize
       );
 
-      const upperLeft = vec2(
-        this.position.x + 30,
-        this.position.y + root.computedOffset - 10
-      );
+      const upperLeft = vec2(this.position.x + 30, this.position.y + root.computedOffset - 10);
 
       let inUpperBufferTriangle = pointInTriangle(this.mousePosition, [
         upperLeft,
         add(upperLeft, vec2(size.x, 0)),
-        add(upperLeft, vec2(size.x, -15))
+        add(upperLeft, vec2(size.x, -15)),
       ]);
 
       const lowerLeft = add(upperLeft, vec2(0, this.offsetOf(root)));
       let inLowerBufferTriangle = pointInTriangle(this.mousePosition, [
         lowerLeft,
         add(lowerLeft, vec2(size.x, childSize.y)),
-        add(lowerLeft, vec2(size.x, 0))
+        add(lowerLeft, vec2(size.x, 0)),
       ]);
 
       // If we were ever in the child menu, disable the upper and lower buffer triangles
@@ -417,15 +355,9 @@ export default class Menu {
         add(childSize, vec2(50, 65))
       );
 
-      if (
-        inRootOption ||
-        inChildMenu ||
-        inUpperBufferTriangle ||
-        inLowerBufferTriangle ||
-        inChildBuffer
-      ) {
+      if (inRootOption || inChildMenu || inUpperBufferTriangle || inLowerBufferTriangle || inChildBuffer) {
         if (inChildMenu) {
-          root.children.forEach(c => {
+          root.children.forEach((c) => {
             if (
               pointInBox(
                 this.mousePosition,
@@ -450,18 +382,9 @@ export default class Menu {
       }
     }
 
-    this.tree.options.forEach(v => {
-      const upperLeft = vec2(
-        this.position.x,
-        this.position.y + v.computedOffset - 10
-      );
-      if (
-        pointInBox(
-          this.mousePosition,
-          upperLeft,
-          vec2(size.x, this.offsetOf(v))
-        )
-      ) {
+    this.tree.options.forEach((v) => {
+      const upperLeft = vec2(this.position.x, this.position.y + v.computedOffset - 10);
+      if (pointInBox(this.mousePosition, upperLeft, vec2(size.x, this.offsetOf(v)))) {
         result.push(v);
 
         // Compute a minimum time to enable the buffer triangles
@@ -484,7 +407,7 @@ export default class Menu {
 
       // assume only one level
       const childSize = this.size(v.children);
-      v.children.forEach(c => {
+      v.children.forEach((c) => {
         if (
           pointInBox(
             this.mousePosition,
@@ -513,7 +436,7 @@ export default class Menu {
 
   private computeOffsetForOptions(options: MenuOption[]) {
     let height = 12;
-    options.forEach(v => {
+    options.forEach((v) => {
       v.computedOffset = height;
       height += this.offsetOf(v);
 

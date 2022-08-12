@@ -15,12 +15,7 @@ export default class GridRenderer {
     const minframePosition = state.grid.project(vec2(minframe, 0));
     const maxframePosition = state.grid.project(vec2(maxframe, 0));
     ctx.fillStyle = Colors.ActiveGridBackground;
-    ctx.fillRect(
-      minframePosition.x,
-      0,
-      maxframePosition.x - minframePosition.x,
-      state.bounds.y
-    );
+    ctx.fillRect(minframePosition.x, 0, maxframePosition.x - minframePosition.x, state.bounds.y);
 
     const xstep = state.grid.horizontalPixelStep;
     const xstart = state.grid.horizontalPixelStart;
@@ -50,10 +45,7 @@ export default class GridRenderer {
       ctx.strokeStyle = Colors.LightLine;
       ctx.beginPath();
       ctx.moveTo(0, Math.round(state.bounds.y - (y + ystep / 2)) + 0.5);
-      ctx.lineTo(
-        state.bounds.x,
-        Math.round(state.bounds.y - (y + ystep / 2)) + 0.5
-      );
+      ctx.lineTo(state.bounds.x, Math.round(state.bounds.y - (y + ystep / 2)) + 0.5);
       ctx.stroke();
     }
   }

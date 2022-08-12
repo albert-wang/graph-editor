@@ -1,12 +1,14 @@
-import { Vec2 } from "./math";
-import beizer from "bezier-js";
+import type { Vec2 } from "./math";
+import type { Point } from "bezier-js";
+
+import { Bezier } from "bezier-js";
 import { exhaustive } from "@graph/components/graph/util/exhaustive";
 
 export enum ControlPointType {
   Linear = 0,
   Beizer = 1,
   BeizerContinuous = 2,
-  LinearFlat = 3
+  LinearFlat = 3,
 }
 
 export function isLinear(t: ControlPointType): boolean {
@@ -14,9 +16,7 @@ export function isLinear(t: ControlPointType): boolean {
 }
 
 export function isBeizer(t: ControlPointType): boolean {
-  return (
-    t === ControlPointType.BeizerContinuous || t === ControlPointType.Beizer
-  );
+  return t === ControlPointType.BeizerContinuous || t === ControlPointType.Beizer;
 }
 
 export class ControlPoint {
@@ -27,14 +27,9 @@ export class ControlPoint {
 
   // Very specifically this will be undefined at first so that it doesn't
   // get reactified by deep inspection
-  cachedLUT: BezierJs.Point[] | undefined = undefined;
+  cachedLUT: Point[] | undefined = undefined;
 
-  constructor(
-    type: ControlPointType,
-    position: Vec2,
-    forward: Vec2,
-    backward: Vec2
-  ) {
+  constructor(type: ControlPointType, position: Vec2, forward: Vec2, backward: Vec2) {
     this.type = type;
     this.position = position;
     this.forwardHandle = forward;
@@ -46,7 +41,7 @@ export class ControlPoint {
       type: this.type,
       position: this.position,
       forwardHandle: this.forwardHandle,
-      backwardsHandle: this.backwardsHandle
+      backwardsHandle: this.backwardsHandle,
     };
   }
 }
@@ -85,12 +80,7 @@ export class Curve {
     const cps = jsonObject.controlPoints || [];
     if (cps.length) {
       result.controlPoints = cps.map((cp: any) => {
-        const c = new ControlPoint(
-          cp.type,
-          cp.position,
-          cp.forwardHandle,
-          cp.backwardsHandle
-        );
+        const c = new ControlPoint(cp.type, cp.position, cp.forwardHandle, cp.backwardsHandle);
         return c;
       });
     }
@@ -105,7 +95,7 @@ export class Curve {
       controlPoints: this.controlPoints,
       color: this.color,
       visible: this.visible,
-      locked: this.locked
+      locked: this.locked,
     };
   }
 
@@ -122,29 +112,26 @@ export class Curve {
       return 0;
     }
 
-    return this.controlPoints.reduce(
-      (m: number, cp: ControlPoint, i: number, arr: ControlPoint[]): number => {
-        const next = arr[i + 1];
-        if (!next) {
-          return Math.min(m, cp.position.y);
-        }
+    return this.controlPoints.reduce((m: number, cp: ControlPoint, i: number, arr: ControlPoint[]): number => {
+      const next = arr[i + 1];
+      if (!next) {
+        return Math.min(m, cp.position.y);
+      }
 
-        if (isLinear(cp.type)) {
-          return Math.min(cp.position.y, next.position.y);
-        } else if (isBeizer(cp.type)) {
-          const lut = this.getLUT(cp, next);
-          const minLut = lut.reduce((m: number, p: BezierJs.Point): number => {
-            return Math.min(m, p.y);
-          }, lut[0].y);
+      if (isLinear(cp.type)) {
+        return Math.min(cp.position.y, next.position.y);
+      } else if (isBeizer(cp.type)) {
+        const lut = this.getLUT(cp, next);
+        const minLut = lut.reduce((m: number, p: Point): number => {
+          return Math.min(m, p.y);
+        }, lut[0].y);
 
-          return Math.min(minLut, m);
-        }
+        return Math.min(minLut, m);
+      }
 
-        // Unknown type
-        return m;
-      },
-      this.controlPoints[0].position.y
-    );
+      // Unknown type
+      return m;
+    }, this.controlPoints[0].position.y);
   }
 
   public maximumValue(): number {
@@ -152,29 +139,26 @@ export class Curve {
       return 0;
     }
 
-    return this.controlPoints.reduce(
-      (m: number, cp: ControlPoint, i: number, arr: ControlPoint[]): number => {
-        const next = arr[i + 1];
-        if (!next) {
-          return Math.max(m, cp.position.y);
-        }
+    return this.controlPoints.reduce((m: number, cp: ControlPoint, i: number, arr: ControlPoint[]): number => {
+      const next = arr[i + 1];
+      if (!next) {
+        return Math.max(m, cp.position.y);
+      }
 
-        if (isLinear(cp.type)) {
-          return Math.max(cp.position.y, next.position.y);
-        } else if (isBeizer(cp.type)) {
-          const lut = this.getLUT(cp, next);
-          const maxLut = lut.reduce((m: number, p: BezierJs.Point): number => {
-            return Math.max(m, p.y);
-          }, lut[0].y);
+      if (isLinear(cp.type)) {
+        return Math.max(cp.position.y, next.position.y);
+      } else if (isBeizer(cp.type)) {
+        const lut = this.getLUT(cp, next);
+        const maxLut = lut.reduce((m: number, p: Point): number => {
+          return Math.max(m, p.y);
+        }, lut[0].y);
 
-          return Math.max(maxLut, m);
-        }
+        return Math.max(maxLut, m);
+      }
 
-        // Unknown type
-        return m;
-      },
-      this.controlPoints[0].position.y
-    );
+      // Unknown type
+      return m;
+    }, this.controlPoints[0].position.y);
   }
 
   public curveInformationAt(frame: number): CurveInformation {
@@ -183,7 +167,7 @@ export class Curve {
       points: cps,
       framesBetween: 0,
       framesFromFirst: 0,
-      t: 0
+      t: 0,
     };
 
     // Before first
@@ -265,11 +249,7 @@ export class Curve {
           } else if (!bounds[1] && bounds[0]) {
             return bounds[0].y;
           } else if (bounds[0] && bounds[1]) {
-            return lerp(
-              bounds[0].y,
-              bounds[1].y,
-              (frame - bounds[0].x) / (bounds[1].x - bounds[0].x)
-            );
+            return lerp(bounds[0].y, bounds[1].y, (frame - bounds[0].x) / (bounds[1].x - bounds[0].x));
           } else {
             return 0;
           }
@@ -282,7 +262,7 @@ export class Curve {
   }
 
   // TODO: Merge implementations with controlPointsAtFrame
-  private lutLookup(frame: number, lut: BezierJs.Point[]) {
+  private lutLookup(frame: number, lut: Point[]) {
     if (frame < lut[0].x) {
       return [null, lut[0]];
     }
@@ -330,7 +310,7 @@ export class Curve {
   }
 
   public invalidateLUTs() {
-    this.controlPoints.forEach(c => {
+    this.controlPoints.forEach((c) => {
       c.cachedLUT = undefined;
     });
   }
@@ -338,7 +318,7 @@ export class Curve {
   private getLUT(p: ControlPoint, n: ControlPoint) {
     let lut = p.cachedLUT;
     if (!lut || lut.length === 0) {
-      const b = new beizer(
+      const b = new Bezier(
         p.position.x,
         p.position.y,
         p.forwardHandle.x,

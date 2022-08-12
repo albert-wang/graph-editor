@@ -1,9 +1,9 @@
-interface Vec2 {
+export interface Vec2 {
   x: number;
   y: number;
 }
 
-interface Rect {
+export interface Rect {
   x: number;
   y: number;
   w: number;
@@ -69,16 +69,4 @@ function pointInTriangle(point: Vec2, triangle: Vec2[]) {
   return b[0] >= 0 && b[1] >= 0 && b[2] >= 0;
 }
 
-export {
-  Vec2,
-  vec2,
-  Rect,
-  negate,
-  add,
-  sub,
-  mul,
-  div,
-  dot,
-  pointInBox,
-  pointInTriangle
-};
+export { vec2, negate, add, sub, mul, div, dot, pointInBox, pointInTriangle };
