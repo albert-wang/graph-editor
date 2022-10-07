@@ -1,7 +1,7 @@
 import type { Vec2 } from "./math";
 import type { Point } from "bezier-js";
 
-import { Bezier } from "bezier-js";
+import Bezier from "bezier-js";
 import { exhaustive } from "@graph/components/graph/util/exhaustive";
 
 export enum ControlPointType {
@@ -315,9 +315,11 @@ export class Curve {
     });
   }
 
-  private getLUT(p: ControlPoint, n: ControlPoint) {
+  private getLUT(p: ControlPoint, n: ControlPoint): Point[] {
     let lut = p.cachedLUT;
     if (!lut || lut.length === 0) {
+
+      // @ts-ignore
       const b = new Bezier(
         p.position.x,
         p.position.y,
@@ -329,7 +331,7 @@ export class Curve {
         n.position.y
       );
 
-      lut = b.getLUT(128);
+      lut = b.getLUT(128) as Point[];
       p.cachedLUT = lut;
     }
 
